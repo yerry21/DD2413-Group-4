@@ -64,7 +64,6 @@ class GazeTracker:
     
     def is_looking_at_robot(self, frame):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         results = self.face_mesh.process(frame_rgb)
         
         is_looking = False
@@ -174,8 +173,10 @@ frame_queue = deque(maxlen=30)
 
 def on_message(ws, message):
     img = Image.open(BytesIO(message))
-    frame = np.array(img)
+    #frame = np.array(img)
+    frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     frame_queue.append(frame)
+    print(frame.shape)
 
 def on_error(ws, error):
     print(f"Error: {error}")
@@ -213,7 +214,9 @@ while True:
             cv2.putText(processed_frame, 
                            f"Engagement: {metrics['engagement_percentage']:.1f}%",
                            (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.imshow('Processed Frame', processed_frame)
+            
+            display_frame = cv2.resize(frame, (600, 800))
+            cv2.imshow('Processed Frame', display_frame)
 
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
