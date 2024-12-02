@@ -181,58 +181,47 @@
 
   <script>
     let data = {
-      ans_yes: false,
-      ans_no: false,
-      ans_maybe: false,
+      ans: 0, // 1 : Yes, 2 : No, 3 : Maybe
       sc_enabled: false, // Social Cues
       delay_enabled: false, // Delay
-      animal_lion: false,
-      animal_butterfly: false,
-      animal_cow: false,
-      animal_frog: false,
-      animal_shark: false,
+      animal_num: 0, // 1 : Lion, 2 : Butterfly, 3 : Cow, 4 : Frog, 5 : Shark
     };
 
     function resetData() {
       // Reset all answers and animals to false
-      data.ans_yes = false;
-      data.ans_no = false;
-      data.ans_maybe = false;
-      data.animal_lion = false;
-      data.animal_butterfly = false;
-      data.animal_cow = false;
-      data.animal_frog = false;
-      data.animal_shark = false;
+      data.ans = 0;
+      data.animal_num = 0;
     }
 
     function handleResponse(response) {
-      resetData(); // Reset all previous states
+      
 
       if (response === "Yes") {
-        data.ans_yes = true;
+        data.ans = 1;
       } else if (response === "No") {
-        data.ans_no = true;
+        data.ans = 2;
       } else if (response === "Maybe") {
-        data.ans_maybe = true;
+        data.ans = 3;
       } else if (response === "Animal 1") {
-        data.animal_lion = true;
+        data.animal_num = 1;
         response = "Lion"; // Display the animal name
       } else if (response === "Animal 2") {
-        data.animal_butterfly = true;
+        data.animal_num = 2;
         response = "Butterfly";
       } else if (response === "Animal 3") {
-        data.animal_cow = true;
+        data.animal_num = 3;
         response = "Cow";
       } else if (response === "Animal 4") {
-        data.animal_frog = true;
+        data.animal_num = 4;
         response = "Frog";
       } else if (response === "Animal 5") {
-        data.animal_shark = true;
+        data.animal_num = 5;
         response = "Shark";
       }
 
       addToHistory(response); // Add to history
       sendData(data);
+      resetData(); // Reset all previous states
 
       const display = document.getElementById("response-display");
       display.innerHTML = `<p>Misty's Response: <strong>${response}</strong></p>`;
