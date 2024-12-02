@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import threading
 import time
-from misty_functions import move_head_no, move_head_yes, play_audio, upload_audio_to_misty, move_head_backchanneling, move_head_backchanneling2
+from misty_functions import move_head_no, move_head_yes, play_audio, upload_audio_to_misty, move_head_backchanneling, move_head_backchanneling2, start_face_detection, get_face_data
 from mistyPy.Robot import Robot
 
 app = Flask(__name__)
@@ -41,7 +41,11 @@ def process():
 def main_process():
     global old_data, guiData
     upload_audio_to_misty(misty, "audios/intro.wav")
+    start_face_detection(misty)
     while True:
+        faces = get_face_data(misty)
+        print(faces)
+
         if guiData.get("answer") == "yes":
             upload_audio_to_misty(misty, "audios/yes.wav")
             move_head_yes(misty, 0)

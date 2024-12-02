@@ -8,6 +8,11 @@ import base64
 misty = Robot("192.168.1.237")
 # print(current_response.json())
 
+def start_face_detection(misty):
+    return misty.post_request("faces/detection/start")
+
+def get_face_data(misty):
+    return misty.get_request("faces/detection")
 
 def move_head_no(misty, center_pitch):
     yaw_no = 20
