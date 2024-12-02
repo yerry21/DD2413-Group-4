@@ -209,8 +209,6 @@
   <div class="response-display" id="response-display">
     <p>Awaiting your input...</p>
   </div>
-
-
   
   <script>
     function sendData(data) {
@@ -227,23 +225,30 @@
         .then(response => response.json())
         .catch(error => console.error('Error:', error));
     }
+
   </script>
 
   <script>
     function handleResponse(response) {
+
+      let data = {};
+
       if (response === 'Yes') {
-        data = {
-          answer : "yes"
-        };
-        sendData(data);
-
+        data = { answer: "yes" };
       } else if (response === 'No') {
-        data = {
-          answer: "no"
-        };
-        sendData(data);
-
+        data = { answer: "no" };
+      } else if (response === 'Nod Yes') {
+        data = { answer: "Nod yes" };
+      } else if (response === 'Nod No') {
+        data = { answer: "nod no" };
+      } else {
+        console.error("Unhandled response:", response);
+        return; // Exit if the response is not handled
       }
+
+      // Send the data to the server
+      sendData(data);
+
       const display = document.getElementById('response-display');
       display.innerHTML = `<p>Misty's Response: <strong>${response}</strong></p>`;
     }

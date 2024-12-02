@@ -2,6 +2,8 @@ from mistyPy.Robot import Robot
 from time import sleep as delay
 import numpy as np
 import cv2
+import time
+import base64
 
 misty = Robot("192.168.1.237")
 # print(current_response.json())
@@ -56,6 +58,30 @@ def move_head_yes(misty, center_pitch):
     curr_response = misty.move_head(center_pitch, 0, 0, duration=pitch_duration)
     print("moving head back to center")
     return
+
+def play_audio(self, fileName, volume) -> bool:
+    """Plays an audio file on Misty robot."""
+    volume = int(volume)
+    curr_response = self.play_audio(fileName=fileName, volume=volume)
+    print(curr_response)
+    return curr_response.status_code == 200
+
+def upload_audio_to_misty(misty, file_path):
+    # Read the audio file and convert to base64
+    with open(file_path, "rb") as audio_file:
+        audio_bytes = audio_file.read()
+        base64_audio = base64.b64encode(audio_bytes).decode('utf-8')
+    
+    # Upload to Misty
+    response = misty.save_audio(
+        fileName="intro.wav",
+        data=base64_audio,
+        immediatelyApply=True,
+        overwriteExisting=True
+    )
+    
+    print(f"Upload response: {response.status_code}")
+    return response.status_code == 200
 
 
 if __name__ == "__main__":
