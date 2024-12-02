@@ -9,6 +9,8 @@ from io import BytesIO
 from PIL import Image
 
 # For getting video input from Misty and process it remotely.
+
+# You can tune the EAR and ver/hor thresholds accordingly
 class GazeTracker:
     def __init__(self, history_seconds=300, target_fps=15):
         self.mp_face_mesh = mp.solutions.face_mesh
