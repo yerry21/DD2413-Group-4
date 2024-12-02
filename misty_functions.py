@@ -58,6 +58,66 @@ def move_head_yes(misty, center_pitch):
     curr_response = misty.move_head(center_pitch, 0, 0, duration=pitch_duration)
     print("moving head back to center")
     return
+def move_head_backchanneling(misty, center_pitch):
+    yaw_left = -10  # Slight tilt to the left
+    yaw_right = 10  # Slight tilt to the right
+    yaw_delay = 0.5
+    yaw_duration = 0.1
+    
+    # Slight head tilt to the left
+    misty.move_head(center_pitch, yaw_left, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Slight nod
+    misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)  # Slight upward nod
+    delay(yaw_delay)
+    
+    # Head back to center position after nod
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Slight tilt to the left and back to center for backchanneling effect
+    misty.move_head(center_pitch, yaw_left, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Nod again
+    misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Move back to center
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    return
+
+def move_head_backchanneling2(misty, center_pitch):
+    yaw_left = -10  # Slight tilt to the left
+    yaw_right = 10  # Slight tilt to the right
+    yaw_delay = 0.5
+    yaw_duration = 0.1
+    
+    # Slight head tilt to the left
+    misty.move_head(center_pitch, yaw_right, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Slight nod
+    misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)  # Slight upward nod
+    delay(yaw_delay)
+    
+    # Head back to center position after nod
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Slight tilt to the left and back to center for backchanneling effect
+    misty.move_head(center_pitch, yaw_right, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Nod again
+    misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Move back to center
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    return
+
 
 def play_audio(self, fileName, volume) -> bool:
     """Plays an audio file on Misty robot."""

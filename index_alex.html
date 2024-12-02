@@ -213,7 +213,7 @@
   <script>
     function sendData(data) {
       // Get the value (or any other variables you want to send)
-
+      console.log("Sending data to server:", data); // Debugging
       // Send data to Flask server using Fetch API
       fetch('/process', {
         method: 'POST',
@@ -238,15 +238,32 @@
       } else if (response === 'No') {
         data = { answer: "no" };
       } else if (response === 'Nod Yes') {
-        data = { answer: "Nod yes" };
+        data = { answer: "nod yes" };
       } else if (response === 'Nod No') {
         data = { answer: "nod no" };
+      } else if (response === 'Yeah!') {
+        data = { answer: "yeah" };
+      } else if (response === 'Right') {
+        data = { answer: "right" };
+      } else if (response === 'Nah!') {
+        data = { answer: "nah!" };
+      } else if (response === 'MHM') {
+        data = { answer: "mhm" };
+      } else if (response === 'Hmm...') {
+        data = { answer: "hmm" };
+      } else if (response === 'Aha!') {
+        data = { answer: "aha" };
+      } else if (response === 'Uh-huh') {
+        data = { answer: "uh-huh" };
+      } else if (response === 'Try Again') {
+        data = { answer: "try again" };
       } else {
         console.error("Unhandled response:", response);
         return; // Exit if the response is not handled
       }
 
       // Send the data to the server
+      console.log("Sending data to server:", data); // Debugging
       sendData(data);
 
       const display = document.getElementById('response-display');
