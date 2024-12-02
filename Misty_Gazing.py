@@ -61,7 +61,28 @@ class GazeTracker:
         
         ear = (v1 + v2) / (2.0 * h + 1e-6)
         return ear
-    
+    def calculate_eye_center(self,landmarks, eye_indices, frame_width, frame_height):
+        """
+        Calculate the mean position (center) of the eye landmarks.
+        
+        Args:
+            landmarks: List of Mediapipe landmarks.
+            eye_indices: Indices of the eye landmarks.
+            frame_width: Width of the video frame.
+            frame_height: Height of the video frame.
+        
+        Returns:
+            (center_x, center_y): Mean position of the eye in pixel coordinates.
+        """
+        total_x, total_y = 0, 0
+        for idx in eye_indices:
+            total_x += landmarks[idx].x * frame_width  # Convert normalized to pixel
+            total_y += landmarks[idx].y * frame_height  # Convert normalized to pixel
+
+        center_x = total_x / len(eye_indices)
+        center_y = total_y / len(eye_indices)
+        
+        return int(center_x), int(center_y)
     def is_looking_at_robot(self, frame):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(frame_rgb)
@@ -121,6 +142,20 @@ class GazeTracker:
                 x_px = int(landmark.x * frame.shape[1])
                 y_px = int(landmark.y * frame.shape[0])
                 cv2.circle(frame, (x_px, y_px), 1, (0, 255, 0), -1)
+
+            
+                
+
+                
+            # Calculate eye centers
+            left_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.LEFT_EYE, frame.shape[1], frame.shape[0])
+            right_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.RIGHT_EYE, frame.shape[1], frame.shape[0])
+            
+            # Draw the centers
+            cv2.circle(frame, left_eye_center, 5, (255, 0, 0), -1)  # Green dot for left eye
+            cv2.circle(frame, right_eye_center, 5, (255, 0, 0), -1)  # Blue dot for right eye
+            
+            print(f"Left Eye Center: {left_eye_center}, Right Eye Center: {right_eye_center}")
         
         status_color = (0, 255, 0) if is_looking else (0, 0, 255)
         cv2.putText(frame, f"Looking: {is_looking}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, status_color, 2)
@@ -130,6 +165,8 @@ class GazeTracker:
                    (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
             
         return is_looking, frame
+    
+    
     
     def process_frame(self, frame):
         if self.start_time is None:
