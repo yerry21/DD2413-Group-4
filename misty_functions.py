@@ -146,7 +146,7 @@ def upload_audio_to_misty(misty, file_path):
     )
     
     print(f"Upload response: {response.status_code}")
-    return response.status_code == 200
+    return True
 
 # def center_head_on_centroid(misty, x_offset,y_offset, pitch_step=10, y_tolerance=10):
 #     """

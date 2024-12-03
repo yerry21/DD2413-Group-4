@@ -170,11 +170,11 @@ class GazeTracker:
             y_offset = eye_centroid[1]- frame_center_y
             # After y_offset is calculated:
             # if natural_gaze_bool :
-            x_tolerance = 6
+            x_tolerance = 5 #6
             y_tolerance = 10
             if abs(y_offset) > y_tolerance or abs(x_offset) > x_tolerance:
-              center_head_on_centroid(misty,x_offset,y_offset,pitch_step=11,yaw_step=15,x_tolerance=x_tolerance,y_tolerance=y_tolerance)
-            
+              center_head_on_centroid(misty,x_offset,y_offset,pitch_step=11,yaw_step=13,x_tolerance=x_tolerance,y_tolerance=y_tolerance)
+            # pitch 11 yae 15
 
 
 
