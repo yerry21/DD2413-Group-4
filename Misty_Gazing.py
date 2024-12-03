@@ -7,6 +7,9 @@ import threading
 from collections import deque
 from io import BytesIO
 from PIL import Image
+from mistyPy.Robot import Robot
+from misty_functions import center_head_on_centroid
+misty = Robot("192.168.1.237")
 
 # For getting video input from Misty and process it remotely.
 
@@ -156,6 +159,25 @@ class GazeTracker:
             cv2.circle(frame, right_eye_center, 5, (255, 0, 0), -1)  # Blue dot for right eye
             
             print(f"Left Eye Center: {left_eye_center}, Right Eye Center: {right_eye_center}")
+            
+            eye_centroid = np.array([int(left_eye_center[0] + right_eye_center[0])/2,int(left_eye_center[1] + right_eye_center[1])/2 ])
+            
+            # cv2.circle(frame, eye_centroid, 5, (255, 0, 0), -1)  # Blue dot for right eye
+                        # Compute offsets
+            frame_center_x = frame.shape[1] / 2
+            frame_center_y = frame.shape[0] / 2
+            x_offset = eye_centroid[0] - frame_center_x
+            y_offset = eye_centroid[1]- frame_center_y
+            # After y_offset is calculated:
+            # if natural_gaze_bool :
+            y_tolerance = 10
+            if abs(y_offset) > y_tolerance or abs(x_offset) > x_tolerance:
+              center_head_on_centroid(misty,x_offset,y_offset,pitch_step=11,yaw_step=11)
+            x_tolerance = 10
+
+
+
+
         
         status_color = (0, 255, 0) if is_looking else (0, 0, 255)
         cv2.putText(frame, f"Looking: {is_looking}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, status_color, 2)
