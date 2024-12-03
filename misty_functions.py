@@ -88,7 +88,7 @@ def move_head_yes(misty, center_pitch):
         
 #     else : 
 #         print("Head Centered vertically!")
-def center_head_on_centroid(misty, x_offset, y_offset, pitch_step=10, yaw_step=10, tolerance=10):
+def center_head_on_centroid(misty, x_offset, y_offset, pitch_step=10, yaw_step=10, x_tolerance=10,y_tolerance=10):
     """
     Adjust Misty's head yaw and pitch to center the eye centroid both vertically and horizontally.
 
@@ -106,7 +106,7 @@ def center_head_on_centroid(misty, x_offset, y_offset, pitch_step=10, yaw_step=1
     current_yaw = 0
 
     # Handle vertical adjustment (pitch)
-    if abs(y_offset) > tolerance:
+    if abs(y_offset) > y_tolerance:
         if y_offset > 0:
             # Eye centroid is below center - move head down
             current_pitch += pitch_step
@@ -124,13 +124,13 @@ def center_head_on_centroid(misty, x_offset, y_offset, pitch_step=10, yaw_step=1
         print("Head centered vertically!")
 
     # Handle horizontal adjustment (yaw)
-    if abs(x_offset) > tolerance:
+    if abs(x_offset) > x_tolerance:
         if x_offset > 0:
-            # Eye centroid is to the right - move head right
-            current_yaw += yaw_step
-        else:
             # Eye centroid is to the left - move head left
             current_yaw -= yaw_step
+        else:
+            # Eye centroid is to the right - move head right
+            current_yaw += yaw_step
 
         # Clamp yaw to Misty's range (-90 to 90 degrees)
         current_yaw = max(-90, min(90, current_yaw))
