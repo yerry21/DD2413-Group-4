@@ -111,13 +111,13 @@ def move_head_backchanneling2(misty, center_pitch):
     misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
     delay(yaw_delay)
     
-    # Slight tilt to the left and back to center for backchanneling effect
-    misty.move_head(center_pitch, yaw_right, 0, duration=yaw_duration)
-    delay(yaw_delay)
+    # # Slight tilt to the left and back to center for backchanneling effect
+    # misty.move_head(center_pitch, yaw_right, 0, duration=yaw_duration)
+    # delay(yaw_delay)
     
-    # Nod again
-    misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)
-    delay(yaw_delay)
+    # # Nod again
+    # misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)
+    # delay(yaw_delay)
     
     # Move back to center
     misty.move_head(center_pitch, 0, 0, duration=yaw_duration)

@@ -44,11 +44,22 @@ class GazeTracker:
         self.target_fps = target_fps
         self.frame_interval = 1.0 / target_fps
         self.last_frame_time = time.time()
+
+        # New variable to control movement delay
+        self.last_move_time = time.time()
+        self.move_interval = 5
         
     def should_process_frame(self):
         current_time = time.time()
         if current_time - self.last_frame_time >= self.frame_interval:
             self.last_frame_time = current_time
+            return True
+        return False
+    
+    def should_move(self):
+        current_time = time.time()
+        if current_time - self.last_move_time >= self.move_interval:
+            self.last_move_time = current_time
             return True
         return False
         
@@ -86,6 +97,7 @@ class GazeTracker:
         center_y = total_y / len(eye_indices)
         
         return int(center_x), int(center_y)
+    
     def is_looking_at_robot(self, frame):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(frame_rgb)
@@ -140,45 +152,24 @@ class GazeTracker:
                 abs(y) < self.VERTICAL_THRESHOLD and 
                 abs(x) < self.HORIZONTAL_THRESHOLD
             )
-            
-            for landmark in face_landmarks.landmark:
-                x_px = int(landmark.x * frame.shape[1])
-                y_px = int(landmark.y * frame.shape[0])
-                cv2.circle(frame, (x_px, y_px), 1, (0, 255, 0), -1)
 
-            
+            # Handle gaze-based head movement only if the gaze has been stable and the time interval has passed
+            if is_looking and self.should_move():
+                # Calculate eye centers and offset
+                left_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.LEFT_EYE, frame.shape[1], frame.shape[0])
+                right_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.RIGHT_EYE, frame.shape[1], frame.shape[0])
+
+                eye_centroid = np.array([int(left_eye_center[0] + right_eye_center[0])/2, int(left_eye_center[1] + right_eye_center[1])/2])
                 
+                frame_center_x = frame.shape[1] / 2
+                frame_center_y = frame.shape[0] / 2
+                x_offset = eye_centroid[0] - frame_center_x
+                y_offset = eye_centroid[1] - frame_center_y
 
-                
-            # Calculate eye centers
-            left_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.LEFT_EYE, frame.shape[1], frame.shape[0])
-            right_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.RIGHT_EYE, frame.shape[1], frame.shape[0])
-            
-            # Draw the centers
-            cv2.circle(frame, left_eye_center, 5, (255, 0, 0), -1)  # Green dot for left eye
-            cv2.circle(frame, right_eye_center, 5, (255, 0, 0), -1)  # Blue dot for right eye
-            
-            print(f"Left Eye Center: {left_eye_center}, Right Eye Center: {right_eye_center}")
-            
-            eye_centroid = np.array([int(left_eye_center[0] + right_eye_center[0])/2,int(left_eye_center[1] + right_eye_center[1])/2 ])
-            
-            # cv2.circle(frame, (eye_centroid[0],eye_centroid[1]), 5, (255, 0, 0), -1)  # Blue dot for right eye
-                        # Compute offsets
-            frame_center_x = frame.shape[1] / 2
-            frame_center_y = frame.shape[0] / 2
-            x_offset = eye_centroid[0] - frame_center_x
-            y_offset = eye_centroid[1]- frame_center_y
-            # After y_offset is calculated:
-            # if natural_gaze_bool :
-            x_tolerance = 5 #6
-            y_tolerance = 10
-            if abs(y_offset) > y_tolerance or abs(x_offset) > x_tolerance:
-              center_head_on_centroid(misty,x_offset,y_offset,pitch_step=11,yaw_step=13,x_tolerance=x_tolerance,y_tolerance=y_tolerance)
-            # pitch 11 yae 15
+                x_tolerance = 15  # Tolerance for gaze-based movement
+                y_tolerance = 20
 
-
-
-
+                center_head_on_centroid(misty, x_offset, y_offset, pitch_step=4, yaw_step=4, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
         
         status_color = (0, 255, 0) if is_looking else (0, 0, 255)
         cv2.putText(frame, f"Looking: {is_looking}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, status_color, 2)
@@ -188,7 +179,6 @@ class GazeTracker:
                    (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
             
         return is_looking, frame
-    
     
     
     def process_frame(self, frame):
