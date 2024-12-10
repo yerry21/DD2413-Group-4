@@ -6,8 +6,11 @@ import time
 import base64
 
 misty = Robot("192.168.1.237")
+misty.start_video_streaming()
 # print(current_response.json())
 
+def start_streaming(misty):
+    return misty.start_video_streaming(5678,90,0,0,50,"false")
 def start_face_detection(misty):
     return misty.post_request("faces/detection/start")
 
