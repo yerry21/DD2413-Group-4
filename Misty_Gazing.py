@@ -98,7 +98,7 @@ class GazeTracker:
         
         return int(center_x), int(center_y)
     
-    def is_looking_at_robot(self, frame):
+    def is_looking_at_robot(self, frame, gazeMatching = False):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(frame_rgb)
         
@@ -152,24 +152,24 @@ class GazeTracker:
                 abs(y) < self.VERTICAL_THRESHOLD and 
                 abs(x) < self.HORIZONTAL_THRESHOLD
             )
+            if gazeMatching : 
+                # Handle gaze-based head movement only if the gaze has been stable and the time interval has passed
+                if is_looking and self.should_move():
+                    # Calculate eye centers and offset
+                    left_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.LEFT_EYE, frame.shape[1], frame.shape[0])
+                    right_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.RIGHT_EYE, frame.shape[1], frame.shape[0])
 
-            # Handle gaze-based head movement only if the gaze has been stable and the time interval has passed
-            if is_looking and self.should_move():
-                # Calculate eye centers and offset
-                left_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.LEFT_EYE, frame.shape[1], frame.shape[0])
-                right_eye_center = self.calculate_eye_center(face_landmarks.landmark, self.RIGHT_EYE, frame.shape[1], frame.shape[0])
+                    eye_centroid = np.array([int(left_eye_center[0] + right_eye_center[0])/2, int(left_eye_center[1] + right_eye_center[1])/2])
+                    
+                    frame_center_x = frame.shape[1] / 2
+                    frame_center_y = frame.shape[0] / 2
+                    x_offset = eye_centroid[0] - frame_center_x
+                    y_offset = eye_centroid[1] - frame_center_y
 
-                eye_centroid = np.array([int(left_eye_center[0] + right_eye_center[0])/2, int(left_eye_center[1] + right_eye_center[1])/2])
-                
-                frame_center_x = frame.shape[1] / 2
-                frame_center_y = frame.shape[0] / 2
-                x_offset = eye_centroid[0] - frame_center_x
-                y_offset = eye_centroid[1] - frame_center_y
+                    x_tolerance = 15  # Tolerance for gaze-based movement
+                    y_tolerance = 20
 
-                x_tolerance = 15  # Tolerance for gaze-based movement
-                y_tolerance = 20
-
-                center_head_on_centroid(misty, x_offset, y_offset, pitch_step=4, yaw_step=4, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
+                    center_head_on_centroid(misty, x_offset, y_offset, pitch_step=4, yaw_step=4, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
         
         status_color = (0, 255, 0) if is_looking else (0, 0, 255)
         cv2.putText(frame, f"Looking: {is_looking}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, status_color, 2)
@@ -181,11 +181,11 @@ class GazeTracker:
         return is_looking, frame
     
     
-    def process_frame(self, frame):
+    def process_frame(self, frame, IsTracking = False):
         if self.start_time is None:
             self.start_time = time.time()
             
-        is_looking, processed_frame = self.is_looking_at_robot(frame)
+        is_looking, processed_frame = self.is_looking_at_robot(frame, gazeMatching = IsTracking)
         self.gaze_history.append((time.time(), is_looking))
         
         return processed_frame
@@ -218,58 +218,58 @@ class GazeTracker:
             
         return {'engagement_percentage': (looking_time / total_time) * 100, 'average_look_duration': avg_duration, 'look_count': len(look_durations)}
 
-# WebSocket video frame receiver
-frame_queue = deque(maxlen=30)
+# # WebSocket video frame receiver
+# frame_queue = deque(maxlen=30)
 
-def on_message(ws, message):
-    img = Image.open(BytesIO(message))
-    #frame = np.array(img)
-    frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-    frame_queue.append(frame)
-    print(frame.shape)
+# def on_message(ws, message):
+#     img = Image.open(BytesIO(message))
+#     #frame = np.array(img)
+#     frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+#     frame_queue.append(frame)
+#     print(frame.shape)
 
-def on_error(ws, error):
-    print(f"Error: {error}")
+# def on_error(ws, error):
+#     print(f"Error: {error}")
 
-def on_close(ws, close_status_code, close_msg):
-    print("WebSocket closed")
+# def on_close(ws, close_status_code, close_msg):
+#     print("WebSocket closed")
 
-def on_open(ws):
-    print("WebSocket connection opened")
+# def on_open(ws):
+#     print("WebSocket connection opened")
 
-def start_websocket_stream():
-    ws = websocket.WebSocketApp("ws://192.168.1.237:5678", 
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close)
-    ws.run_forever()
+# def start_websocket_stream():
+#     ws = websocket.WebSocketApp("ws://192.168.1.237:5678", 
+#                                 on_message=on_message,
+#                                 on_error=on_error,
+#                                 on_close=on_close)
+#     ws.run_forever()
 
-# Start WebSocket server in a separate thread
-threading.Thread(target=start_websocket_stream, daemon=True).start()
+# # Start WebSocket server in a separate thread
+# threading.Thread(target=start_websocket_stream, daemon=True).start()
 
-# Create GazeTracker instance
-gaze_tracker = GazeTracker()
+# # Create GazeTracker instance
+# gaze_tracker = GazeTracker()
 
-while True:
-    if len(frame_queue) > 0:
-        frame = frame_queue[-1]
-        if gaze_tracker.should_process_frame():
-            processed_frame = gaze_tracker.process_frame(frame)
+# while True:
+#     if len(frame_queue) > 0:
+#         frame = frame_queue[-1]
+#         if gaze_tracker.should_process_frame():
+#             processed_frame = gaze_tracker.process_frame(frame)
             
-            metrics = gaze_tracker.get_engagement_metrics()
-            print(f"Engagement Percentage: {metrics['engagement_percentage']:.2f}%")
-            print(f"Average Look Duration: {metrics['average_look_duration']:.2f} frames")
-            print(f"Look Count: {metrics['look_count']}")
+#             metrics = gaze_tracker.get_engagement_metrics()
+#             print(f"Engagement Percentage: {metrics['engagement_percentage']:.2f}%")
+#             print(f"Average Look Duration: {metrics['average_look_duration']:.2f} frames")
+#             print(f"Look Count: {metrics['look_count']}")
 
-            cv2.putText(processed_frame, 
-                           f"Engagement: {metrics['engagement_percentage']:.1f}%",
-                           (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+#             cv2.putText(processed_frame, 
+#                            f"Engagement: {metrics['engagement_percentage']:.1f}%",
+#                            (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             
-            display_frame = cv2.resize(frame, (600, 800))
-            cv2.imshow('Processed Frame', display_frame)
+#             display_frame = cv2.resize(frame, (600, 800))
+#             cv2.imshow('Processed Frame', display_frame)
 
     
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
 
-cv2.destroyAllWindows()
+# cv2.destroyAllWindows()
