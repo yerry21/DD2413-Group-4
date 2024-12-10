@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misty's Animal Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e8f0f7;
+      color: #333;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      color: #2011a2;
+      text-align: left;
+      margin-bottom: 5px;
+    }
+
+    p.description {
+      color: black;
+      text-align: left;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .divider {
+      background-color: #ddd;
+      width: 1px;
+      height: 100%;
+    }
+
+    .category {
+      text-align: center;
+    }
+
+    h2 {
+      color: black;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin: 10px 5px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      width: auto;
+      text-align: center;
+      color: white;
+    }
+
+    .positive {
+      background-color: #4CAF50;
+    }
+
+    .non-lexical {
+      background-color: #FFC107;
+    }
+
+    .negative {
+      background-color: #f44336;
+    }
+
+    .toggle {
+      background-color: #4a90e2;
+    }
+
+    .animal {
+      background-color: #8e44ad;
+      color: white;
+    }
+
+    .prompt {
+      background-color: #1e90ff;
+      font-size: 12px;
+      padding: 10px 15px;
+    }
+
+    .toggle-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .response-display {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .response-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .prompt-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .animal-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .history-container {
+      margin-top: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .history-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .history-list li {
+      margin-bottom: 5px;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Misty's "What Am I?" Animal Game</h1>
+  <p class="description">Guide Misty with your responses and actions!</p>
+
+  <div style="margin-bottom: 20px; text-align: left;">
+    <label for="participantId" style="font-size: 16px; font-weight: bold;">Participant ID:</label>
+    <input type="number" id="participantId" placeholder="Enter participant ID" style="padding: 5px; font-size: 14px; width: 200px;" />
+  </div>
+
+  <div class="grid-container">
+    <div class="category">
+      <h2>Responses</h2>
+
+      <div class="response-row">
+        <button class="button positive" onclick="handleResponse('Yes')">Yes</button>
+        <button class="button non-lexical" onclick="handleResponse('Maybe')">Maybe</button>
+        <button class="button negative" onclick="handleResponse('No')">No</button>
+      </div>
+
+      <div class="prompt-row">
+  <button class="button prompt" onclick="handleResponse('Welcome')">Welcome</button>
+  <button class="button prompt" onclick="handleResponse('Next round')">Next round</button>
+  <button class="button prompt" onclick="handleResponse('Correct!')">Correct!</button>
+  <button class="button prompt" onclick="handleResponse('No questions left')">No questions left</button>
+  <button class="button prompt" onclick="handleResponse('Finished')">Finished</button>
+  <button class="button prompt" onclick="handleResponse('Go ahead and ask me a question!')">Ask a question</button>
+  <button class="button prompt" onclick="handleResponse('Do you wanna make a guess?')">Wanna make a guess?</button>
+  <button class="button prompt" onclick="handleResponse('You cannot ask me questions anymore, you have to make a guess!')">Have to make a guess</button>
+  <button class="button prompt" onclick="handleResponse('You still have questions to ask me, go ahead!')">Questions remaining</button>
+</div>
+
+      <div class="animal-row">
+        <button class="button animal" onclick="handleResponse('Animal 1')">Animal 1</button>
+        <button class="button animal" onclick="handleResponse('Animal 2')">Animal 2</button>
+        <button class="button animal" onclick="handleResponse('Animal 3')">Animal 3</button>
+        <button class="button animal" onclick="handleResponse('Animal 4')">Animal 4</button>
+        <button class="button animal" onclick="handleResponse('Animal 5')">Animal 5</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="category">
+      <h2>Toggles</h2>
+      <div class="toggle-container">
+        <label for="delayToggle">Delay (Randomized):</label>
+        <input type="checkbox" id="delayToggle" onchange="handleDelayToggle(this.checked)">
+      </div>
+    </div>
+  </div>
+
+  <div class="response-display" id="response-display">
+    <p>Awaiting your input...</p>
+  </div>
+
+  <div class="history-container">
+    <h2>History</h2>
+    <ul class="history-list" id="history-list"></ul>
+    <div class="button-container">
+      <button class="button negative" onclick="resetHistory()">Reset</button>
+      <button class="button toggle" onclick="exportToCSV()">Export to CSV</button>
+    </div>
+  </div>
+
+<script>
+  let data = {
+    ans: 0, // 1 : yes, 2 : no, 3 : maybe
+    delay_enabled: false, // delay, randomised in python code
+    animal_num: 0, // 1 : lion, 2 : butterfly, 3 : cow, 4 : frog, 5 : shark
+    prompt: 0, // from 1 to 9 - you can find them in handleResponse
+  };
+
+  const history = [];
+
+  function resetData() {
+    data.ans = 0;
+    data.animal_num = 0;
+    data.prompt = 0;
+  }
+
+  function handleResponse(response) {
+    let mistyResponse = "";
+    if (response === "Yes") {
+        data.ans = 1;
+        mistyResponse = "Yes";
+    } else if (response === "No") {
+        data.ans = 2;
+        mistyResponse = "No";
+    } else if (response === "Maybe") {
+        data.ans = 3;
+        mistyResponse = "Maybe";
+    } else if (response.startsWith("Animal")) {
+        const animalIndex = parseInt(response.split(" ")[1]);
+        data.animal_num = animalIndex;
+        mistyResponse = `Congrats, you guessed it! The animal is ${getAnimalName(animalIndex)}.`;
+    } else if (response === "Welcome") {
+        data.prompt = 1;
+        mistyResponse = "Welcome! Are you ready to play the game with me?";
+    } else if (response === "Next round") {
+        data.prompt = 2;
+        mistyResponse = "One more round?";
+    } else if (response === "Correct!") {
+        data.prompt = 3;
+        mistyResponse = "Congrats, you guessed it!";
+    } else if (response === "No questions left") {
+        data.prompt = 4;
+        mistyResponse = "Oh no, you didn’t guess it in the 5 questions!";
+    } else if (response === "Finished") {
+        data.prompt = 5;
+        mistyResponse = "Game over! Thanks for playing!";
+    } else if (response === "Go ahead and ask me a question!") {
+	data.prompt = 6;
+        mistyResponse = "Go ahead and ask me a question!";
+    } else if (response === "Do you wanna make a guess?") {
+	data.prompt = 7;
+        mistyResponse = "Do you wanna make a guess?";
+    } else if (response === "You cannot ask me questions anymore, you have to make a guess!") {
+	data.prompt = 8;
+        mistyResponse = "You cannot ask me questions anymore, you have to make a guess!";
+    } else if (response === "You still have questions to ask me, go ahead!") {
+	data.prompt = 9;
+        mistyResponse = "You still have questions to ask me, go ahead!";
+    }
+
+    addToHistory(mistyResponse);
+    sendData(data);
+    resetData();
+
+    const display = document.getElementById("response-display");
+    display.innerHTML = `<p>Misty's response: <strong>${response}</strong></p>`;
+  }
+
+  function getAnimalName(index) {
+    const animalNames = ["Lion", "Butterfly", "Cow", "Frog", "Shark"];
+    return animalNames[index - 1] || "Another animal from the list";
+  }
+
+  function addToHistory(response) {
+    const timestamp = new Date().toLocaleString();
+
+    history.push({ timestamp, response });
+
+    const historyList = document.getElementById("history-list");
+    const listItem = document.createElement("li");
+    listItem.textContent = response;
+    historyList.appendChild(listItem);
+  }
+
+  function resetHistory() {
+    history.length = 0;
+    const historyList = document.getElementById("history-list");
+    historyList.innerHTML = "";
+    const display = document.getElementById("response-display");
+    display.innerHTML = `<p>Waiting for your prompt..</p>`;
+  }
+
+  function exportToCSV() {
+    const participantId = document.getElementById("participantId").value.trim();
+    if (!participantId) {
+      alert("Please enter the Participant ID before exporting to CSV.");
+      return;
+    }
+
+    const rows = [["Timestamp", "Response"]];
+    history.forEach((entry) => {
+      rows.push([entry.timestamp, entry.response]);
+    });
+
+    const csvContent = rows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `responses_${participantId}.csv`;
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+
+  function handleDelayToggle(isChecked) {
+    data.delay_enabled = isChecked;
+    sendData(data);
+  }
+
+  function sendData(data) {
+    fetch("/process", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .catch((error) => console.error("Error:", error));
+  }
+</script>
+</body>
+
+</html>

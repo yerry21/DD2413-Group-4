@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misty's Animal Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e8f0f7; /* Misty's light blue */
+      color: #333;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      color: #2011a2; /* Purple for the main title */
+      text-align: left;
+      margin-bottom: 5px;
+    }
+
+    p.description {
+      color: black; /* Black for the description */
+      text-align: left;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr; /* Two sections with a divider */
+      gap: 20px;
+      align-items: start;
+    }
+
+    .divider {
+      background-color: #ddd; /* Divider color */
+      width: 1px;
+      height: 100%;
+    }
+
+    .category {
+      text-align: center;
+    }
+
+    h2 {
+      color: black; /* Black for section headings */
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 15px;
+      margin: 10px 5px; /* Inline margin for spacing */
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      width: auto; /* Automatically adjust width for labels */
+      text-align: center;
+      color: white; /* White text */
+    }
+
+    /* Button Colors */
+    .positive {
+      background-color: #4CAF50; /* Green */
+    }
+
+    .non-lexical {
+      background-color: #FFC107; /* Yellow */
+    }
+
+    .negative {
+      background-color: #f44336; /* Red */
+    }
+
+    .toggle {
+      background-color: #4a90e2; /* Blue */
+    }
+
+    .animal {
+      background-color: #8e44ad; /* Purple */
+      color: white;
+    }
+
+    .toggle-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .response-display {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .animal-row {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .history-container {
+      margin-top: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .history-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .history-list li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Misty's Animal Game</h1>
+  <p class="description">Guide Misty with your responses and actions!</p>
+
+  <!-- Grid Layout -->
+  <div class="grid-container">
+    <!-- Yes/Maybe/No Buttons -->
+    <div class="category">
+      <h2>Responses</h2>
+      <button class="button positive" onclick="handleResponse('Yes')">Yes</button>
+      <button class="button non-lexical" onclick="handleResponse('Maybe')">Maybe</button>
+      <button class="button negative" onclick="handleResponse('No')">No</button>
+    </div>
+
+    <div class="divider"></div> <!-- Divider -->
+
+    <!-- Toggles Section -->
+    <div class="category">
+      <h2>Toggles</h2>
+      <div class="toggle-container">
+        <label for="socialCuesToggle">Social Cues:</label>
+        <input type="checkbox" id="socialCuesToggle" onchange="handleSocialCuesToggle(this.checked)">
+      </div>
+      <div class="toggle-container">
+        <label for="delayToggle">Delay (Randomized):</label>
+        <input type="checkbox" id="delayToggle" onchange="handleDelayToggle(this.checked)">
+      </div>
+    </div>
+  </div>
+
+  <!-- Animal Game Row -->
+  <div class="animal-row">
+    <button class="button animal" onclick="handleResponse('Animal 1')">Animal 1</button>
+    <button class="button animal" onclick="handleResponse('Animal 2')">Animal 2</button>
+    <button class="button animal" onclick="handleResponse('Animal 3')">Animal 3</button>
+    <button class="button animal" onclick="handleResponse('Animal 4')">Animal 4</button>
+    <button class="button animal" onclick="handleResponse('Animal 5')">Animal 5</button>
+  </div>
+
+  <!-- Response Display -->
+  <div class="response-display" id="response-display">
+    <p>Awaiting your input...</p>
+  </div>
+
+  <!-- History -->
+  <div class="history-container">
+    <h2>History</h2>
+    <ul class="history-list" id="history-list"></ul>
+    <button class="button negative" onclick="resetHistory()">Reset</button>
+  </div>
+
+  <script>
+    let data = {
+      ans: 0, // 1 : Yes, 2 : No, 3 : Maybe
+      sc_enabled: false, // Social Cues
+      delay_enabled: false, // Delay
+      animal_num: 0, // 1 : Lion, 2 : Butterfly, 3 : Cow, 4 : Frog, 5 : Shark
+    };
+
+    function resetData() {
+      // Reset all answers and animals to false
+      data.ans = 0;
+      data.animal_num = 0;
+    }
+
+    function handleResponse(response) {
+      
+
+      if (response === "Yes") {
+        data.ans = 1;
+      } else if (response === "No") {
+        data.ans = 2;
+      } else if (response === "Maybe") {
+        data.ans = 3;
+      } else if (response === "Animal 1") {
+        data.animal_num = 1;
+        response = "Lion"; // Display the animal name
+      } else if (response === "Animal 2") {
+        data.animal_num = 2;
+        response = "Butterfly";
+      } else if (response === "Animal 3") {
+        data.animal_num = 3;
+        response = "Cow";
+      } else if (response === "Animal 4") {
+        data.animal_num = 4;
+        response = "Frog";
+      } else if (response === "Animal 5") {
+        data.animal_num = 5;
+        response = "Shark";
+      }
+
+      addToHistory(response); // Add to history
+      sendData(data);
+      resetData(); // Reset all previous states
+
+      const display = document.getElementById("response-display");
+      display.innerHTML = `<p>Misty's Response: <strong>${response}</strong></p>`;
+    }
+
+    function addToHistory(response) {
+      const historyList = document.getElementById("history-list");
+      const listItem = document.createElement("li");
+      listItem.textContent = response;
+      historyList.appendChild(listItem);
+    }
+
+    function resetHistory() {
+      const historyList = document.getElementById("history-list");
+      historyList.innerHTML = ""; // Clear history
+      const display = document.getElementById("response-display");
+      display.innerHTML = `<p>Awaiting your input...</p>`; // Reset display
+    }
+
+    function handleSocialCuesToggle(isChecked) {
+      data.sc_enabled = isChecked; // Update social cues state
+      sendData(data);
+    }
+
+    function handleDelayToggle(isChecked) {
+      data.delay_enabled = isChecked; // Update delay state
+      sendData(data);
+    }
+
+    function sendData(data) {
+      fetch("/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .catch((error) => console.error("Error:", error));
+    }
+  </script>
+</body>
+
+</html>

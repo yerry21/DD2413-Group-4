@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misty's Animal Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e8f0f7; /* Misty's light blue */
+      color: #333;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      color: #2011a2; /* Purple for the main title */
+      text-align: left; /* Aligned to the left */
+      margin-bottom: 5px;
+    }
+
+    p.description {
+      color: black; /* Black for the description */
+      text-align: left; /* Aligned to the left */
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr 1px 1fr 1px 1fr; /* 4 Columns with dividers */
+      gap: 20px;
+      align-items: start;
+    }
+
+    .divider {
+      background-color: #ddd; /* Divider color */
+      width: 1px;
+      height: 100%; /* Full height divider */
+    }
+
+    .category {
+      text-align: center;
+    }
+
+    h2 {
+      color: black; /* Black for section headings */
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .button {
+      display: block;
+      padding: 15px;
+      margin: 10px auto;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      width: 90%;
+      text-align: center;
+      color: white; /* White text */
+    }
+
+    /* Positive Buttons */
+    .positive {
+      background-color: #4CAF50; /* Green */
+    }
+
+    /* Negative Buttons */
+    .negative {
+      background-color: #f44336; /* Red */
+    }
+
+    /* Non-Lexical Buttons */
+    .non-lexical {
+      background-color: #FFC107; /* Yellow */
+    }
+
+    /* Movement Buttons */
+    .movement {
+      background-color: #4a90e2; /* Misty's Blue */
+    }
+
+    .slider-row {
+      display: grid;
+      grid-template-columns: 100px 1fr 50px; /* Fixed size for label, flexible slider, and value */
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    label {
+      text-align: right;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+
+    .slider {
+      width: 100%; /* Ensures all sliders take equal space */
+    }
+
+    .slider-indicator {
+      text-align: left;
+      font-size: 14px;
+      margin-left: 10px;
+      color: #555;
+    }
+
+    .response-display {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Title and Description -->
+  <h1>Misty's Animal Game</h1>
+  <p class="description">Guide Misty with your responses and actions!</p>
+
+  <!-- Grid Layout -->
+  <div class="grid-container">
+    <!-- Positive Responses -->
+    <div class="category">
+      <h2>Positive Responses</h2>
+      <button class="button positive" onclick="handleResponse('Yes 😊')">Yes 😊</button>
+      <button class="button positive" onclick="handleResponse('Yeah! 👍')">Yeah! 👍</button>
+      <button class="button positive" onclick="handleResponse('Right ✅')">Right ✅</button>
+      <button class="button positive" onclick="handlePlayAgain()">Wanna play again?</button>
+    </div>
+
+    <div class="divider"></div> <!-- Divider -->
+
+    <!-- Negative Responses -->
+    <div class="category">
+      <h2>Negative Responses</h2>
+      <button class="button negative" onclick="handleResponse('No 😔')">No 😔</button>
+      <button class="button negative" onclick="handleResponse('Nah! 🚫')">Nah! 🚫</button>
+      <button class="button negative" onclick="handleResponse('Try Again ❌')">Try Again ❌</button>
+    </div>
+
+    <div class="divider"></div> <!-- Divider -->
+
+    <!-- Non-Lexical Backchanneling -->
+    <div class="category">
+      <h2>Non-Lexical Backchanneling</h2>
+      <button class="button non-lexical" onclick="handleResponse('MHM')">MHM</button>
+      <button class="button non-lexical" onclick="handleResponse('Hmm...')">Hmm...</button>
+      <button class="button non-lexical" onclick="handleResponse('Aha!')">Aha!</button>
+      <button class="button non-lexical" onclick="handleResponse('Uh-huh')">Uh-huh</button>
+    </div>
+
+    <div class="divider"></div> <!-- Divider -->
+
+    <!-- Movement -->
+    <div class="category">
+      <h2>Movement</h2>
+      <button class="button movement" onclick="handleResponse('Nod Yes')">Nod Yes</button>
+      <button class="button movement" onclick="handleResponse('Nod No')">Nod No</button>
+
+      <!-- Sliders for head and arm movement -->
+      <div class="slider-row">
+        <label for="headMovement">Head:</label>
+        <input class="slider" type="range" id="headMovement" min="-90" max="90" value="0" oninput="showSliderValue('headMovement', 'headIndicator')">
+        <div class="slider-indicator" id="headIndicator">0°</div>
+      </div>
+      <div class="slider-row">
+        <label for="leftArmMovement">Left Arm:</label>
+        <input class="slider" type="range" id="leftArmMovement" min="0" max="180" value="90" oninput="showSliderValue('leftArmMovement', 'leftArmIndicator')">
+        <div class="slider-indicator" id="leftArmIndicator">90°</div>
+      </div>
+      <div class="slider-row">
+        <label for="rightArmMovement">Right Arm:</label>
+        <input class="slider" type="range" id="rightArmMovement" min="0" max="180" value="90" oninput="showSliderValue('rightArmMovement', 'rightArmIndicator')">
+        <div class="slider-indicator" id="rightArmIndicator">90°</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Response Display -->
+  <div class="response-display" id="response-display">
+    <p>Awaiting your input...</p>
+  </div>
+
+  <script>
+    function handleResponse(response) {
+      const display = document.getElementById('response-display');
+      display.innerHTML = `<p>Misty's Response: <strong>${response}</strong></p>`;
+    }
+
+    function handlePlayAgain() {
+      const display = document.getElementById('response-display');
+      display.innerHTML = `<p>Let's play again! 🎉</p>`;
+    }
+
+    function showSliderValue(sliderId, indicatorId) {
+      const slider = document.getElementById(sliderId);
+      const indicator = document.getElementById(indicatorId);
+      indicator.innerText = `${slider.value}°`;
+    }
+  </script>
+</body>
+</html>
