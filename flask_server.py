@@ -32,7 +32,7 @@ backchannel_chance = 0.99 # 50% chance of backchannel
 
 @app.route("/")
 def index():
-    return open("misty_final.html").read()
+    return open("htmls/misty_final.html").read()
 
 
 @app.route("/process", methods=["POST"])
