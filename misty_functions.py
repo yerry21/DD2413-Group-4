@@ -9,6 +9,84 @@ misty = Robot("192.168.1.237")
 misty.start_video_streaming()
 # print(current_response.json())
 
+# Audio sets
+audio_sets_animals = ["animal1.wav", "animal2.wav", "animal3.wav", "animal4.wav", "animal5.wav"]
+audio_welcome = "intro.wav"
+audio_sets_next_round = ["Ask.wav", "AskNew.wav", "WhatQuestion.wav"]
+audio_sets_correct = ["YouGuessedIt.wav", "AbsolutelyRight.wav", "ThatsCorrect.wav"]
+audio_sets_ask_guess = ["MakeAGuess.wav", "WannaMakeAGuess.wav", "TimeToMakeAGuess.wav"]
+audio_finished = "ThanksForPlaying.wav"
+audio_questions_rem = ["5left.wav", "4left.wav", "3left.wav", "2left.wav", "1left.wav", "0left.wav"]
+audio_sorry = "Sorry.wav"
+
+class AudioHandler:
+    def __init__(self):
+        # Tracking counters for cycling audio sets
+        self._counters = {
+            'next_round': 0,
+            'correct': 0,
+            'ask_guess': 0
+        }
+        
+        # Mapping of prompts to audio files or audio sets
+        self._prompt_audio_map = {
+            1: audio_welcome,  # Welcome
+            2: audio_sets_next_round,  # Next round
+            3: audio_sets_correct,  # Correct
+            4: audio_sets_ask_guess,  # Ask to guess
+            5: audio_finished,  # Finished
+            6: audio_questions_rem[0],  # 5 questions left
+            7: audio_questions_rem[1],  # 4 questions left
+            8: audio_questions_rem[2],  # 3 questions left
+            9: audio_questions_rem[3],  # 2 questions left
+            10: audio_questions_rem[4],  # 1 question left
+            11: audio_questions_rem[5],  # No questions left
+            12: audio_sets_animals[0],  # Wrong answer for animal 1
+            13: audio_sets_animals[1],  # Wrong answer for animal 2
+            14: audio_sets_animals[2],  # Wrong answer for animal 3
+            15: audio_sets_animals[3],  # Wrong answer for animal 4
+            16: audio_sets_animals[4]   # Wrong answer for animal 5
+        }
+    
+    def handle_prompt(self, misty, prompt):
+        """
+        Handle different prompts and play corresponding audio files.
+        
+        :param misty: Misty robot instance
+        :param prompt: Numeric prompt identifying the current game state
+        """
+        # Check if prompt exists in our mapping
+        if prompt not in self._prompt_audio_map:
+            print(f"Unknown prompt: {prompt}")
+            return
+        
+        audio_source = self._prompt_audio_map[prompt]
+        
+        # Handle cycling audio sets
+        if prompt in [2, 3, 4]:
+            # Determine which counter to use based on the prompt
+            counter_key = {
+                2: 'next_round',
+                3: 'correct',
+                4: 'ask_guess'
+            }[prompt]
+            
+            # Cycle through the audio set
+            self._counters[counter_key] += 1
+            audio = audio_source[self._counters[counter_key] % len(audio_source)]
+        else:
+            # For non-cycling prompts, use the audio directly
+            audio = audio_source
+
+        if 12 <= prompt <= 16:
+            upload_audio_to_misty(misty, "audios/" + audio_sorry)
+
+            time.sleep(2)        
+        # Upload audio to Misty
+        return upload_audio_to_misty(misty, "audios/" + audio)
+        
+
+
 def start_streaming(misty):
     return misty.start_video_streaming(5678,90,0,0,50,"false")
 def start_face_detection(misty):

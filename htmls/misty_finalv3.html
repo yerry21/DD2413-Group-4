@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misty's Animal Guessing Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e8f0f7;
+      color: #333;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      color: #2011a2;
+      text-align: left;
+      margin-bottom: 5px;
+    }
+
+    p.description {
+      color: black;
+      text-align: left;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .category {
+      text-align: center;
+    }
+
+    h2 {
+      color: black;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin: 10px 5px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      width: auto;
+      text-align: center;
+      color: white;
+    }
+
+    .animal {
+      background-color: #8e44ad;
+      color: white;
+    }
+
+    .positive {
+      background-color: #4CAF50;
+    }
+
+    .non-lexical {
+      background-color: #FFC107;
+    }
+
+    .negative {
+      background-color: #f44336;
+    }
+
+    .toggle {
+      background-color: #4a90e2;
+    }
+
+    .prompt {
+      background-color: #1e90ff;
+      font-size: 12px;
+      padding: 10px 15px;
+    }
+
+    .response-display {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .history-container {
+      margin-top: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .history-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .history-list li {
+      margin-bottom: 5px;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-start;
+    }
+
+    .questions-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Misty's "What Am I?" Animal Game</h1>
+  <p class="description">Guide Misty with your responses and actions!</p>
+
+  <div style="margin-bottom: 20px; text-align: left;">
+    <label for="participantId" style="font-size: 16px; font-weight: bold;">Participant ID:</label>
+    <input type="number" id="participantId" placeholder="Enter participant ID" style="padding: 5px; font-size: 14px; width: 200px;" />
+  </div>
+
+  <div style="margin-bottom: 20px; text-align: left;">
+    <label for="delayToggle" style="font-size: 16px; font-weight: bold;">Delay (Randomized):</label>
+    <input type="checkbox" id="delayToggle" onchange="handleDelayToggle(this.checked)">
+  </div>
+
+  <div class="grid-container">
+
+    <div class="category">
+      <h2>Short responses</h2>
+      <button class="button positive" onclick="handleResponse('Yes')">YES</button>
+      <button class="button non-lexical" onclick="handleResponse('Maybe')">MAYBE</button>
+      <button class="button negative" onclick="handleResponse('No')">NO</button>
+
+      <h2>Long responses</h2>
+      <button class="button prompt" onclick="handleResponse('Hi, I’m Misty! Let’s play an animal guessing game!')">Welcome</button>
+      <button class="button prompt" onclick="handleResponse('Next round')">Next round</button>
+      <button class="button prompt" onclick="handleResponse('Correct!')">Correct</button>
+      <button class="button prompt" onclick="handleResponse('No questions left')">No questions left</button>
+      <button class="button prompt" onclick="handleResponse('Finished')">Finished</button>
+    </div>
+
+    <div class="category">
+      <h2>Questions remaining</h2>
+      <div class="questions-row">
+        <button class="button prompt" onclick="handleResponse('You have 5 questions left!')">5</button>
+        <button class="button prompt" onclick="handleResponse('You have 4 questions left!')">4</button>
+        <button class="button prompt" onclick="handleResponse('You have 3 questions left!')">3</button>
+        <button class="button prompt" onclick="handleResponse('You have 2 questions left!')">2</button>
+        <button class="button prompt" onclick="handleResponse('You have 1 question left!')">1</button>
+        <button class="button prompt" onclick="handleResponse('You have no questions left!')">None</button>
+      </div>
+    </div>
+
+    <div class="category">
+      <h2>Wrong answer</h2>
+      <button class="button animal" onclick="handleResponse('Lion')">Lion</button>
+      <button class="button animal" onclick="handleResponse('Butterfly')">Butterfly</button>
+      <button class="button animal" onclick="handleResponse('Cow')">Cow</button>
+      <button class="button animal" onclick="handleResponse('Frog')">Frog</button>
+      <button class="button animal" onclick="handleResponse('Shark')">Shark</button>
+    </div>
+  </div>
+
+  <div class="response-display" id="response-display">
+    <p>Waiting for the response...</p>
+  </div>
+
+  <div class="history-container">
+    <h2>History</h2>
+    <ul class="history-list" id="history-list"></ul>
+    <div class="button-container">
+      <button class="button negative" onclick="resetHistory()">Reset</button>
+      <button class="button toggle" onclick="exportToCSV()">Export to CSV</button>
+    </div>
+  </div>
+
+<script>
+  let data = {
+    ans: 0,
+    delay_enabled: false,
+    prompt: 0,
+  };
+
+  const history = [];
+
+  function resetData() {
+    data.ans = 0;
+    data.delay_enabled = false;
+    data.prompt = 0;
+  }
+
+  function handleResponse(response) {
+    let mistyResponse = "";
+
+    // For social cues, short responses
+    if (response === "Yes") {
+        data.ans = 1;
+        mistyResponse = "Yes";
+    } else if (response === "No") {
+        data.ans = 2;
+        mistyResponse = "No";
+    } else if (response === "Maybe") {
+        data.ans = 3;
+        mistyResponse = "Maybe";
+    }
+    
+    // For the long responses
+    else if (response === "Hi, I’m Misty! Let’s play an animal guessing game!") {
+        data.prompt = 1; // Welcome
+        mistyResponse = response;
+    } else if (response === "Next round") {
+        data.prompt = 2; // Next round
+        mistyResponse = response;
+    } else if (response === "Correct!") {
+        data.prompt = 3; // Correct
+        mistyResponse = response;
+    } else if (response === "No questions left") {
+        data.prompt = 4; // Ask them to guess/No questions left
+        mistyResponse = response;
+    } else if (response === "Finished") {
+        data.prompt = 5; // Finished
+        mistyResponse = response;
+    }
+    
+    // Questions Remaining
+    else if (response === "You have 5 questions left!") {
+        data.prompt = 6;
+        mistyResponse = response;
+    } else if (response === "You have 4 questions left!") {
+        data.prompt = 7;
+        mistyResponse = response;
+    } else if (response === "You have 3 questions left!") {
+        data.prompt = 8;
+        mistyResponse = response;
+    } else if (response === "You have 2 questions left!") {
+        data.prompt = 9;
+        mistyResponse = response;
+    } else if (response === "You have 1 question left!") {
+        data.prompt = 10;
+        mistyResponse = response;
+    } else if (response === "You have no questions left!") {
+        data.prompt = 11;
+        mistyResponse = response;
+    }
+    
+    // Wrong Answers
+    else if (response === "Lion") {
+        data.prompt = 12;
+        mistyResponse = "Wrong answer for Lion!";
+    } else if (response === "Butterfly") {
+        data.prompt = 13;
+        mistyResponse = "Wrong answer for Butterfly!";
+    } else if (response === "Cow") {
+        data.prompt = 14;
+        mistyResponse = "Wrong answer for Cow!";
+    } else if (response === "Frog") {
+        data.prompt = 15;
+        mistyResponse = "Wrong answer for Frog!";
+    } else if (response === "Shark") {
+        data.prompt = 16;
+        mistyResponse = "Wrong answer for Shark!";
+    }
+
+    addToHistory(mistyResponse);
+    sendData(data);
+    resetData();
+
+    const display = document.getElementById("response-display");
+    display.innerHTML = `<p>Misty's response: <strong>${mistyResponse}</strong></p>`;
+  }
+
+  function addToHistory(response) {
+    const timestamp = new Date().toLocaleString();
+
+    history.push({ timestamp, response });
+
+    const historyList = document.getElementById("history-list");
+    const listItem = document.createElement("li");
+    listItem.textContent = response;
+    historyList.appendChild(listItem);
+  }
+
+  function resetHistory() {
+    history.length = 0;
+    const historyList = document.getElementById("history-list");
+    historyList.innerHTML = "";
+    const display = document.getElementById("response-display");
+    display.innerHTML = `<p>Waiting for your prompt..</p>`;
+  }
+
+ function exportToCSV() {
+    const participantId = document.getElementById("participantId").value.trim();
+    if (!participantId) {
+      alert("Please enter the Participant ID before exporting to CSV.");
+      return;
+    }
+
+    const rows = [["Timestamp", "Response"]];
+    history.forEach((entry) => {
+      rows.push([entry.timestamp, entry.response]);
+    });
+
+    const csvContent = rows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `responses_${participantId}.csv`;
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function handleDelayToggle(isChecked) {
+    data.delay_enabled = isChecked;
+    sendData(data);
+  }
+
+  function sendData(data) {
+    fetch("/process", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .catch((error) => console.error("Error:", error));
+  }
+</script>
+</body>
+
+</html>
