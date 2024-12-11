@@ -254,6 +254,7 @@ while True:
     if len(frame_queue) > 0:
         frame = frame_queue[-1]
         if gaze_tracker.should_process_frame():
+            frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
             processed_frame = gaze_tracker.process_frame(frame)
             
             metrics = gaze_tracker.get_engagement_metrics()
