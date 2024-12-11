@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misty's Animal Guessing Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e8f0f7;
+      color: #333;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      color: #2011a2;
+      text-align: left;
+      margin-bottom: 5px;
+    }
+
+    p.description {
+      color: black;
+      text-align: left;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .category {
+      text-align: center;
+    }
+
+    h2 {
+      color: black;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin: 10px 5px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      width: auto;
+      text-align: center;
+      color: white;
+    }
+
+    .positive {
+      background-color: #4CAF50;
+    }
+
+    .non-lexical {
+      background-color: #FFC107;
+    }
+
+    .negative {
+      background-color: #f44336;
+    }
+
+    .toggle {
+      background-color: #4a90e2;
+    }
+
+    .prompt {
+      background-color: #1e90ff;
+      font-size: 12px;
+      padding: 10px 15px;
+    }
+
+    .response-display {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .history-container {
+      margin-top: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .history-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .history-list li {
+      margin-bottom: 5px;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-start;
+    }
+
+    .questions-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Misty's "What Am I?" Animal Game</h1>
+  <p class="description">Guide Misty with your responses and actions!</p>
+
+  <div style="margin-bottom: 20px; text-align: left;">
+    <label for="participantId" style="font-size: 16px; font-weight: bold;">Participant ID:</label>
+    <input type="number" id="participantId" placeholder="Enter participant ID" style="padding: 5px; font-size: 14px; width: 200px;" />
+  </div>
+
+  <div style="margin-bottom: 20px; text-align: left;">
+    <label for="delayToggle" style="font-size: 16px; font-weight: bold;">Delay (Randomized):</label>
+    <input type="checkbox" id="delayToggle" onchange="handleDelayToggle(this.checked)">
+  </div>
+
+  <div class="grid-container">
+    <div class="category">
+      <h2>Welcome</h2>
+      <button class="button prompt" onclick="handleResponse('Hi, I’m Misty! Let’s play an animal guessing game!')">Welcome</button>
+    </div>
+
+    <div class="category">
+      <h2>Responses</h2>
+      <button class="button positive" onclick="handleResponse('Yes')">Yes</button>
+      <button class="button non-lexical" onclick="handleResponse('Maybe')">Maybe</button>
+      <button class="button negative" onclick="handleResponse('No')">No</button>
+    </div>
+
+    <div class="category">
+      <h2>Next round</h2>
+      <button class="button prompt" onclick="handleResponse('Ask a question!')">Ask a question</button>
+      <button class="button prompt" onclick="handleResponse('Okay, ask a new question!')">New question</button>
+      <button class="button prompt" onclick="handleResponse('What’s your question?')">What is your question?</button>
+    </div>
+
+    <div class="category">
+      <h2>Correct</h2>
+      <button class="button prompt" onclick="handleResponse('You guessed it!')">Guessed it!</button>
+      <button class="button prompt" onclick="handleResponse('Absolutely right!')">Absolutely right</button>
+      <button class="button prompt" onclick="handleResponse('That’s correct!')">Correct</button>
+    </div>
+
+    <div class="category">
+      <h2>No questions left</h2>
+      <button class="button prompt" onclick="handleResponse('Make a guess!')">Make a guess</button>
+      <button class="button prompt" onclick="handleResponse('Wanna make a guess?')">Wanna guess?</button>
+      <button class="button prompt" onclick="handleResponse('Have to make a guess.')">Have to guess</button>
+    </div>
+
+    <div class="category">
+      <h2>Finished</h2>
+      <button class="button prompt" onclick="handleResponse('Okay, this was the last game! Thank you for playing!')">Finished</button>
+    </div>
+
+    <div class="category">
+      <h2>Questions remaining</h2>
+      <div class="questions-row">
+        <button class="button prompt" onclick="handleResponse('You have 5 questions left!')">5</button>
+        <button class="button prompt" onclick="handleResponse('You have 4 questions left!')">4</button>
+        <button class="button prompt" onclick="handleResponse('You have 3 questions left!')">3</button>
+        <button class="button prompt" onclick="handleResponse('You have 2 questions left!')">2</button>
+        <button class="button prompt" onclick="handleResponse('You have 1 question left!')">1</button>
+        <button class="button prompt" onclick="handleResponse('You have no questions left!')">None</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="response-display" id="response-display">
+    <p>Awaiting your input...</p>
+  </div>
+
+  <div class="history-container">
+    <h2>History</h2>
+    <ul class="history-list" id="history-list"></ul>
+    <div class="button-container">
+      <button class="button negative" onclick="resetHistory()">Reset</button>
+      <button class="button toggle" onclick="exportToCSV()">Export to CSV</button>
+    </div>
+  </div>
+
+<script>
+  let data = {
+    ans: 0,
+    delay_enabled: false,
+    prompt: 0,
+  };
+
+  const history = [];
+
+  function resetData() {
+    data.ans = 0;
+    data.delay_enabled = false;
+    data.prompt = 0;
+  }
+
+  function handleResponse(response) {
+    let mistyResponse = "";
+
+    if (response === "Yes") {
+      data.ans = 1;
+      mistyResponse = "Yes";
+    } else if (response === "No") {
+      data.ans = 2;
+      mistyResponse = "No";
+    } else if (response === "Maybe") {
+      data.ans = 3;
+      mistyResponse = "Maybe";
+    } else if (response === "Hi, I’m Misty! Let’s play an animal guessing game!") {
+      data.prompt = 1;
+      mistyResponse = response;
+    } else if (response === "Ask a question!") {
+      data.prompt = 2;
+      mistyResponse = response;
+    } else if (response === "Okay, ask a new question!") {
+      data.prompt = 3;
+      mistyResponse = response;
+    } else if (response === "What’s your question?") {
+      data.prompt = 4;
+      mistyResponse = response;
+    } else if (response === "You guessed it!") {
+      data.prompt = 5;
+      mistyResponse = response;
+    } else if (response === "Absolutely right!") {
+      data.prompt = 6;
+      mistyResponse = response;
+    } else if (response === "That’s correct!") {
+      data.prompt = 7;
+      mistyResponse = response;
+    } else if (response === "Make a guess!") {
+      data.prompt = 8;
+      mistyResponse = response;
+    } else if (response === "Wanna make a guess?") {
+      data.prompt = 9;
+      mistyResponse = response;
+    } else if (response === "Have to make a guess") {
+      data.prompt = 10;
+      mistyResponse = response;
+    } else if (response === "Okay, this was the last game! Thank you for playing!") {
+      data.prompt = 11;
+      mistyResponse = response;
+    } else if (response === "You have 5 questions left!") {
+      data.prompt = 12;
+      mistyResponse = response;
+    } else if (response === "You have 4 questions left!") {
+      data.prompt = 13;
+      mistyResponse = response;
+    } else if (response === "You have 3 questions left!") {
+      data.prompt = 14;
+      mistyResponse = response;
+    } else if (response === "You have 2 questions left!") {
+      data.prompt = 15;
+      mistyResponse = response;
+    } else if (response === "You have 1 question left!") {
+      data.prompt = 16;
+      mistyResponse = response;
+    } else if (response === "You have no questions left!") {
+      data.prompt = 17;
+      mistyResponse = response;
+    } else {
+      mistyResponse = response;
+    }
+
+    addToHistory(mistyResponse);
+    sendData(data);
+    resetData();
+
+    const display = document.getElementById("response-display");
+    display.innerHTML = `<p>Misty's response: <strong>${mistyResponse}</strong></p>`;
+  }
+
+  function addToHistory(response) {
+    const timestamp = new Date().toLocaleString();
+
+    history.push({ timestamp, response });
+
+    const historyList = document.getElementById("history-list");
+    const listItem = document.createElement("li");
+    listItem.textContent = response;
+    historyList.appendChild(listItem);
+  }
+
+  function resetHistory() {
+    history.length = 0;
+    const historyList = document.getElementById("history-list");
+    historyList.innerHTML = "";
+    const display = document.getElementById("response-display");
+    display.innerHTML = `<p>Waiting for your prompt..</p>`;
+  }
+
+ function exportToCSV() {
+    const participantId = document.getElementById("participantId").value.trim();
+    if (!participantId) {
+      alert("Please enter the Participant ID before exporting to CSV.");
+      return;
+    }
+
+    const rows = [["Timestamp", "Response"]];
+    history.forEach((entry) => {
+      rows.push([entry.timestamp, entry.response]);
+    });
+
+    const csvContent = rows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `responses_${participantId}.csv`;
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function handleDelayToggle(isChecked) {
+    data.delay_enabled = isChecked;
+    sendData(data);
+  }
+
+  function sendData(data) {
+    fetch("/process", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .catch((error) => console.error("Error:", error));
+  }
+</script>
+</body>
+
+</html>
