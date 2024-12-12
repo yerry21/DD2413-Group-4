@@ -2,9 +2,15 @@ from flask import Flask, request, jsonify
 import threading
 import time
 from misty_functions import move_head_no, move_head_yes, play_audio, move_head_backchanneling, upload_audio_to_misty, start_streaming
-from misty_functions import AudioHandler
 from mistyPy.Robot import Robot
+from misty_functions import AudioHandler
 import numpy as np
+from io import BytesIO
+from PIL import Image
+from collections import deque
+import cv2
+import websocket
+from misty_gazing import GazeTracker
 
 DEBUG = True
 
@@ -71,18 +77,112 @@ def handle_answer(ans, delay):
 
 
     return
+# WebSocket video frame receiver
+frame_queue = deque(maxlen=30)
+last_processed_frame = None
+
+def on_message(ws, message):
+    img = Image.open(BytesIO(message))
+    frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    
+    # If the queue is full, remove the oldest frame before adding a new one
+    if len(frame_queue) >= frame_queue.maxlen:
+        frame_queue.popleft()
+    
+    frame_queue.append(frame)
+
+def on_error(ws, error):
+    print(f"WebSocket error: {error}")
+
+def on_close(ws, close_status_code, close_msg):
+    print("WebSocket closed")
+
+def on_open(ws):
+    print("WebSocket connection opened")
+
+def start_websocket_stream():
+    global ws
+    while True:
+        try:
+            ws = websocket.WebSocketApp("ws://192.168.1.237:5678",
+                                        on_message=on_message,
+                                        on_error=on_error,
+                                        on_close=on_close)
+            
+            # Add reconnection mechanism
+            ws.run_forever(reconnect=5)  # Attempt to reconnect every 5 seconds
+        
+        except Exception as e:
+            print(f"WebSocket connection error: {e}")
+            print("Attempting to reconnect...")
+            time.sleep(5)  # Wait before trying to reconnect
+
+def stop_websocket_stream():
+    if 'ws' in globals():
+        ws.close()
+
+def handle_gaze(gaze, mistygaze):
+    if frame_queue:
+        # Always take the latest frame
+        frame = frame_queue[-1]
+        
+        # Resize the frame to a more manageable size before processing
+        resized_frame = cv2.resize(frame, (600, 800))
+        
+        processed_frame = mistygaze.process_frame(resized_frame, IsTracking=(gaze == 2))
+        
+        metrics = mistygaze.get_engagement_metrics()
+
+        # Create text for display
+        engagement_text = f"Engagement: {metrics['engagement_percentage']:.1f}%"
+        looking_text = f"Looking: {metrics['is_looking']}"
+        look_count_text = f"Look Count: {metrics['look_count']}"
+        
+        # Display metrics on the frame
+        cv2.putText(processed_frame, 
+                    looking_text, 
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 
+                    (0, 255, 0) if metrics['is_looking'] else (0, 0, 255), 2)
+        
+        cv2.putText(processed_frame, 
+                    engagement_text, 
+                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        cv2.putText(processed_frame, 
+                    look_count_text, 
+                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        # print(f"Engagement Percentage: {metrics['engagement_percentage']:.2f}%")
+        # print(f"Average Look Duration: {metrics['average_look_duration']:.2f} frames")
+        # print(f"Look Count: {metrics['look_count']}")
+
+        # cv2.putText(processed_frame, 
+        #             f"Engagement: {metrics['engagement_percentage']:.1f}%",
+        #             (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        cv2.imshow('Processed Frame', processed_frame)
+        cv2.waitKey(1)  # Always call this to update the window
 
 def main_process():
     global guiData
-    
-    upload_audio_to_misty(misty, "audios/intro.wav")
+    #upload_audio_to_misty(misty, "audios/intro.wav")
     time.sleep(0.5)
     start_streaming(misty) #havent tested this yet
+    mistygaze = GazeTracker()
+
+    # Start WebSocket server in a separate thread with exception handling
+    ws_thread = threading.Thread(target=start_websocket_stream, daemon=True)
+    ws_thread.start()
+    gaze = 1
+    
     while True:
         delay = guiData.get("delay_enabled")
         ans = guiData.get("ans")
         animal_num = guiData.get("animal_num")
         prompt = guiData.get("prompt")
+        gaze = guiData.get("gaze")
+                
+        if gaze != 0:  #gaze should be 0, 1, 2
+            handle_gaze(gaze,mistygaze)
 
         if delay and ans != 0:
             time.sleep(delay_duration)

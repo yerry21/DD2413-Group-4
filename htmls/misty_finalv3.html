@@ -142,6 +142,12 @@
     <input type="checkbox" id="delayToggle" onchange="handleDelayToggle(this.checked)">
   </div>
 
+  <!-- New gaze toggle button -->
+  <div style="margin-bottom: 20px; text-align: left;">
+    <label for="gazeToggle" style="font-size: 16px; font-weight: bold;">Gaze:</label>
+    <button id="gazeToggle" class="button toggle" onclick="handleGazeToggle()" style="width: 100px;">Natural Gaze: OFF</button>
+  </div>
+
   <div class="grid-container">
 
     <div class="category">
@@ -151,7 +157,7 @@
       <button class="button negative" onclick="handleResponse('No')">NO</button>
 
       <h2>Long responses</h2>
-      <button class="button prompt" onclick="handleResponse('Hi, I’m Misty! Let’s play an animal guessing game!')">Welcome</button>
+      <button class="button prompt" onclick="handleResponse('Hi, I'm Misty! Let's play an animal guessing game!')">Welcome</button>
       <button class="button prompt" onclick="handleResponse('Next round')">Next round</button>
       <button class="button prompt" onclick="handleResponse('Correct!')">Correct</button>
       <button class="button prompt" onclick="handleResponse('No questions left')">No questions left</button>
@@ -198,6 +204,7 @@
     ans: 0,
     delay_enabled: false,
     prompt: 0,
+    gaze: 1  // Added initial gaze value
   };
 
   const history = [];
@@ -206,6 +213,15 @@
     data.ans = 0;
     data.delay_enabled = false;
     data.prompt = 0;
+    // Not resetting gaze as it should persist
+  }
+
+  // New gaze toggle function
+  function handleGazeToggle() {
+    const gazeButton = document.getElementById('gazeToggle');
+    data.gaze = data.gaze === 1 ? 2 : 1;
+    gazeButton.textContent = `Natural Gaze: ${data.gaze === 1 ? 'OFF' : 'ON'}`;
+    sendData(data);
   }
 
   function handleResponse(response) {
@@ -224,7 +240,7 @@
     }
     
     // For the long responses
-    else if (response === "Hi, I’m Misty! Let’s play an animal guessing game!") {
+    else if (response === "Hi, I'm Misty! Let's play an animal guessing game!") {
         data.prompt = 1; // Welcome
         mistyResponse = response;
     } else if (response === "Next round") {
@@ -349,5 +365,4 @@
   }
 </script>
 </body>
-
 </html>
