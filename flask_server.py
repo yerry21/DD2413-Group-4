@@ -75,16 +75,20 @@ def handle_answer(ans, delay):
 
 # WebSocket video frame receiver
 frame_queue = deque(maxlen=30)
+last_processed_frame = None
 
 def on_message(ws, message):
     img = Image.open(BytesIO(message))
-    #frame = np.array(img)
     frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    
+    # If the queue is full, remove the oldest frame before adding a new one
+    if len(frame_queue) >= frame_queue.maxlen:
+        frame_queue.popleft()
+    
     frame_queue.append(frame)
-    print(frame.shape)
 
 def on_error(ws, error):
-    print(f"Error: {error}")
+    print(f"WebSocket error: {error}")
 
 def on_close(ws, close_status_code, close_msg):
     print("WebSocket closed")
@@ -93,40 +97,66 @@ def on_open(ws):
     print("WebSocket connection opened")
 
 def start_websocket_stream():
-    ws = websocket.WebSocketApp("ws://192.168.1.237:5678", 
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close)
-    ws.run_forever()
+    global ws
+    while True:
+        try:
+            ws = websocket.WebSocketApp("ws://192.168.1.237:5678",
+                                        on_message=on_message,
+                                        on_error=on_error,
+                                        on_close=on_close)
+            
+            # Add reconnection mechanism
+            ws.run_forever(reconnect=5)  # Attempt to reconnect every 5 seconds
+        
+        except Exception as e:
+            print(f"WebSocket connection error: {e}")
+            print("Attempting to reconnect...")
+            time.sleep(5)  # Wait before trying to reconnect
 
-def handle_gaze(gaze,mistygaze) : 
-    IsTracking = (gaze == 2)
-    
-    # Start WebSocket server in a separate thread
-    threading.Thread(target=start_websocket_stream, daemon=True).start()
+def stop_websocket_stream():
+    if 'ws' in globals():
+        ws.close()
 
-    
-    if len(frame_queue) > 0:
+def handle_gaze(gaze, mistygaze):
+    if frame_queue:
+        # Always take the latest frame
         frame = frame_queue[-1]
-        if mistygaze.should_process_frame():
-            processed_frame = mistygaze.process_frame(frame, IsTracking)
-            
-            metrics = mistygaze.get_engagement_metrics()
-            print(f"Engagement Percentage: {metrics['engagement_percentage']:.2f}%")
-            print(f"Average Look Duration: {metrics['average_look_duration']:.2f} frames")
-            print(f"Look Count: {metrics['look_count']}")
+        
+        # Resize the frame to a more manageable size before processing
+        resized_frame = cv2.resize(frame, (600, 800))
+        
+        processed_frame = mistygaze.process_frame(resized_frame, IsTracking=(gaze == 2))
+        
+        metrics = mistygaze.get_engagement_metrics()
 
-            cv2.putText(processed_frame, 
-                        f"Engagement: {metrics['engagement_percentage']:.1f}%",
-                        (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            
-            display_frame = cv2.resize(frame, (600, 800))
-            cv2.imshow('Processed Frame', display_frame)
+        # Create text for display
+        engagement_text = f"Engagement: {metrics['engagement_percentage']:.1f}%"
+        looking_text = f"Looking: {metrics['is_looking']}"
+        look_count_text = f"Look Count: {metrics['look_count']}"
+        
+        # Display metrics on the frame
+        cv2.putText(processed_frame, 
+                    looking_text, 
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 
+                    (0, 255, 0) if metrics['is_looking'] else (0, 0, 255), 2)
+        
+        cv2.putText(processed_frame, 
+                    engagement_text, 
+                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        cv2.putText(processed_frame, 
+                    look_count_text, 
+                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        # print(f"Engagement Percentage: {metrics['engagement_percentage']:.2f}%")
+        # print(f"Average Look Duration: {metrics['average_look_duration']:.2f} frames")
+        # print(f"Look Count: {metrics['look_count']}")
 
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
-    return
-    # cv2.destroyAllWindows()
+        # cv2.putText(processed_frame, 
+        #             f"Engagement: {metrics['engagement_percentage']:.1f}%",
+        #             (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        cv2.imshow('Processed Frame', processed_frame)
+        cv2.waitKey(1)  # Always call this to update the window
 
 def main_process():
     global guiData
@@ -134,6 +164,11 @@ def main_process():
     time.sleep(0.5)
     start_streaming(misty) #havent tested this yet
     mistygaze = GazeTracker()
+    
+    # Start WebSocket server in a separate thread with exception handling
+    ws_thread = threading.Thread(target=start_websocket_stream, daemon=True)
+    ws_thread.start()
+
     while True:
         delay = guiData.get("delay_enabled")
         ans = guiData.get("ans")

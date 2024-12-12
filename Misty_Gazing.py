@@ -15,7 +15,7 @@ misty = Robot("192.168.1.237")
 
 # You can tune the EAR and ver/hor thresholds accordingly
 class GazeTracker:
-    def __init__(self, history_seconds=300, target_fps=15):
+    def __init__(self, history_seconds=300, target_fps=10):
         self.mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = self.mp_face_mesh.FaceMesh(
             max_num_faces=1,
@@ -49,10 +49,20 @@ class GazeTracker:
         self.last_move_time = time.time()
         self.move_interval = 5
         
+    # def should_process_frame(self):
+    #     current_time = time.time()
+    #     if current_time - self.last_frame_time >= self.frame_interval:
+    #         self.last_frame_time = current_time
+    #         return True
+    #     return False
+    
     def should_process_frame(self):
         current_time = time.time()
-        if current_time - self.last_frame_time >= self.frame_interval:
-            self.last_frame_time = current_time
+        elapsed_time = current_time - self.last_frame_time
+        
+        if elapsed_time >= self.frame_interval:
+            # Reset last frame time, but keep any excess time
+            self.last_frame_time += self.frame_interval
             return True
         return False
     
@@ -192,7 +202,7 @@ class GazeTracker:
     
     def get_engagement_metrics(self):
         if len(self.gaze_history) < 2:
-            return {'engagement_percentage': 0.0, 'average_look_duration': 0.0, 'look_count': 0}
+            return {'engagement_percentage': 0.0, 'average_look_duration': 0.0, 'look_count': 0, 'is_looking': False}
         
         total_time = max(0.001, self.gaze_history[-1][0] - self.gaze_history[0][0])
         looking_frames = sum(1 for _, is_looking in self.gaze_history if is_looking)
@@ -213,10 +223,18 @@ class GazeTracker:
             
         if current_duration > 0:
             look_durations.append(current_duration)
-            
+        
         avg_duration = np.mean(look_durations) if look_durations else 0.0
-            
-        return {'engagement_percentage': (looking_time / total_time) * 100, 'average_look_duration': avg_duration, 'look_count': len(look_durations)}
+        
+        # Determine if currently looking (based on the most recent entry)
+        is_looking = self.gaze_history[-1][1] if self.gaze_history else False
+        
+        return {
+            'engagement_percentage': (looking_time / total_time) * 100, 
+            'average_look_duration': avg_duration, 
+            'look_count': len(look_durations),
+            'is_looking': is_looking
+        }
 
 # # WebSocket video frame receiver
 # frame_queue = deque(maxlen=30)
