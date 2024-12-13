@@ -157,10 +157,10 @@
       <button class="button negative" onclick="handleResponse('No')">NO</button>
 
       <h2>Long responses</h2>
-      <button class="button prompt" onclick="handleResponse('Hi, I'm Misty! Let's play an animal guessing game!')">Welcome</button>
+      <button class="button prompt" onclick="handleResponse('welcome')">Welcome</button>
       <button class="button prompt" onclick="handleResponse('Next round')">Next round</button>
       <button class="button prompt" onclick="handleResponse('Correct!')">Correct</button>
-      <button class="button prompt" onclick="handleResponse('No questions left')">No questions left</button>
+      <button class="button prompt" onclick="handleResponse('No questions left')">Ask to Guess</button>
       <button class="button prompt" onclick="handleResponse('Finished')">Finished</button>
     </div>
 
@@ -240,7 +240,7 @@
     }
     
     // For the long responses
-    else if (response === "Hi, I'm Misty! Let's play an animal guessing game!") {
+    else if (response === "welcome") {
         data.prompt = 1; // Welcome
         mistyResponse = response;
     } else if (response === "Next round") {

@@ -16,6 +16,7 @@ DEBUG = True
 
 app = Flask(__name__)
 
+html = "htmls/misty_finalv3.html" #html file path
 misty = Robot("192.168.1.237")
 audio_handler  = AudioHandler()
 
@@ -26,7 +27,8 @@ def debug_print(*args, **kwargs):
 guiData = {
     "ans": 0, # 0: no answer, 1: yes, 2: no, 3: maybe
     "delay_enabled": False,  # Delay
-    "prompt" : 0
+    "prompt" : 0,
+    "gaze"  : 1
 }
 
 audio_sets_yes = ["yes.wav", "yeah.wav", "uh_huh.wav", "right.wav"]
@@ -42,7 +44,7 @@ backchannel_chance = 0.99 # 50% chance of backchannel
 
 @app.route("/")
 def index():
-    return open("htmls/misty_finalv3.html").read()
+    return open(html).read()
 
 
 @app.route("/process", methods=["POST"])
@@ -110,7 +112,7 @@ def start_websocket_stream():
                                         on_close=on_close)
             
             # Add reconnection mechanism
-            ws.run_forever(reconnect=5)  # Attempt to reconnect every 5 seconds
+            ws.run_forever()  # Attempt to reconnect every 5 seconds
         
         except Exception as e:
             print(f"WebSocket connection error: {e}")
@@ -172,17 +174,17 @@ def main_process():
     # Start WebSocket server in a separate thread with exception handling
     ws_thread = threading.Thread(target=start_websocket_stream, daemon=True)
     ws_thread.start()
-    gaze = 1
     
     while True:
         delay = guiData.get("delay_enabled")
         ans = guiData.get("ans")
-        animal_num = guiData.get("animal_num")
         prompt = guiData.get("prompt")
         gaze = guiData.get("gaze")
                 
-        if gaze != 0:  #gaze should be 0, 1, 2
+        if gaze != 1:  # 1 = no gaze, 2 = gaze
             handle_gaze(gaze,mistygaze)
+        else:
+            cv2.destroyAllWindows()
 
         if delay and ans != 0:
             time.sleep(delay_duration)
@@ -197,6 +199,7 @@ def main_process():
         guiData["ans"] = 0 
         guiData["animal_num"] = 0
         guiData["prompt"] = 0
+        guiData["gaze"] = 1
 
         time.sleep(0.05)
 

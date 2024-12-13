@@ -17,7 +17,7 @@ audio_sets_correct = ["YouGuessedIt.wav", "AbsolutelyRight.wav", "ThatsCorrect.w
 audio_sets_ask_guess = ["MakeAGuess.wav", "WannaMakeAGuess.wav", "TimeToMakeAGuess.wav"]
 audio_finished = "ThanksForPlaying.wav"
 audio_questions_rem = ["5left.wav", "4left.wav", "3left.wav", "2left.wav", "1left.wav", "0left.wav"]
-audio_sorry = "Sorry.wav"
+audio_sorry = "sorry.wav"
 
 class AudioHandler:
     def __init__(self):
@@ -77,6 +77,12 @@ class AudioHandler:
         else:
             # For non-cycling prompts, use the audio directly
             audio = audio_source
+
+        if prompt == 11:
+            # If no questions left, play the finished audio and ask to guess
+            upload_audio_to_misty(misty, "audios/" + audio)
+            time.sleep(2)
+            return self.handle_prompt(misty, 4)
 
         if 12 <= prompt <= 16:
             upload_audio_to_misty(misty, "audios/" + audio_sorry)
@@ -220,37 +226,6 @@ def upload_audio_to_misty(misty, file_path):
     print(f"Upload response: {response.status_code}")
     return True
 
-# def center_head_on_centroid(misty, x_offset,y_offset, pitch_step=10, y_tolerance=10):
-#     """
-#     Adjust Misty's head pitch to center the eye centroid vertically.
-
-#     Parameters:
-#     - misty: Misty robot instance
-#     - y_offset: Vertical offset of the eye centroid from the image center (pixels)
-#     - pitch_step: Amount to adjust pitch per iteration (degrees)
-#     - y_tolerance: Acceptable range for y_offset to be considered centered
-#     """
-#     # Current pitch starts at 0 (or an assumed starting value)
-#     current_pitch = 0
-#     print(y_offset)
-#     if abs(y_offset) > y_tolerance:
-#         if y_offset > 0:
-#             # Eye centroid is below center - move head up
-#             current_pitch += pitch_step
-#         else:
-#             # Eye centroid is above center - move head down
-#             current_pitch -= pitch_step
-
-#         # Clamp pitch within Misty's allowed range
-#         current_pitch = max(-40, min(25, current_pitch))
-
-#         # Move Misty's head
-#         misty.move_head(current_pitch, 0, 0, duration=0.1)
-#         print(f"Adjusting Pitch: {current_pitch} degrees")
-
-        
-#     else : 
-#         print("Head Centered vertically!")
 def center_head_on_centroid(misty, x_offset, y_offset, pitch_step=10, yaw_step=10, x_tolerance=10,y_tolerance=10):
     """
     Adjust Misty's head yaw and pitch to center the eye centroid both vertically and horizontally.
@@ -306,7 +281,7 @@ def center_head_on_centroid(misty, x_offset, y_offset, pitch_step=10, yaw_step=1
 
 
 if __name__ == "__main__":
-    eye_level_pitch = -5  # change this to the pitch of the eyes from face detection
+    eye_level_pitch = 0  # change this to the pitch of the eyes from face detection
     response = misty.get_known_faces()
     print(response.json())
 
