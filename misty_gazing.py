@@ -8,14 +8,15 @@ from collections import deque
 from io import BytesIO
 from PIL import Image
 from mistyPy.Robot import Robot
-from misty_functions import center_head_on_centroid
-misty = Robot("192.168.1.237")
+from misty_functions import MistyController
+
 
 # For getting video input from Misty and process it remotely.
 
 # You can tune the EAR and ver/hor thresholds accordingly
 class GazeTracker:
     def __init__(self, history_seconds=300, target_fps=10):
+        self.misty = MistyController()
         self.mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = self.mp_face_mesh.FaceMesh(
             max_num_faces=1,
@@ -85,6 +86,7 @@ class GazeTracker:
         
         ear = (v1 + v2) / (2.0 * h + 1e-6)
         return ear
+    
     def calculate_eye_center(self,landmarks, eye_indices, frame_width, frame_height):
         """
         Calculate the mean position (center) of the eye landmarks.
@@ -179,7 +181,7 @@ class GazeTracker:
                     x_tolerance = 5  # Tolerance for gaze-based movement
                     y_tolerance = 20
 
-                    center_head_on_centroid(misty, x_offset, y_offset, pitch_step=8, yaw_step=8, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
+                    # self.misty.center_head_on_centroid(x_offset, y_offset, pitch_step=8, yaw_step=8, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
         
         status_color = (0, 255, 0) if is_looking else (0, 0, 255)
         cv2.putText(frame, f"Looking: {is_looking}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, status_color, 2)
