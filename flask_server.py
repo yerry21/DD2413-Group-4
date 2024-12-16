@@ -1,7 +1,17 @@
 from flask import Flask, request, jsonify
 import threading
 import time
-from misty_functions import MistyController
+from misty_functions import (
+    move_head_no,
+    move_head_yes,
+    play_audio,
+    move_head_backchanneling,
+    upload_audio_to_misty,
+    start_streaming,
+    look_to_game
+)
+from mistyPy.Robot import Robot
+from misty_functions import AudioHandler
 import numpy as np
 from io import BytesIO
 from PIL import Image
@@ -9,13 +19,24 @@ from collections import deque
 import cv2
 import websocket
 from misty_gazing import GazeTracker
+import datetime
+
 
 DEBUG = True
 
 app = Flask(__name__)
 
+cycle_duration = 5  # seconds
+
+engagement_data = {"engagement_percentage": np.array([]),
+                      "average_look_duration": np.array([]),
+                      "look_count": np.array([])}
+
 html = "htmls/misty_finalv3.html"  # html file path
-misty = MistyController()
+misty = Robot("192.168.1.237")
+audio_handler = AudioHandler()
+
+
 
 guiData = {
     "ans": 0,  # 0: no answer, 1: yes, 2: no, 3: maybe
@@ -25,14 +46,14 @@ guiData = {
 }
 
 audio_sets_yes = ["yes.wav", "yeah.wav", "uh_huh.wav", "right.wav"]
-audio_sets_no = ["no.wav", "no2.wav", "nah.wav", "sorry.wav"]
+audio_sets_no = ["no.wav", "no2.wav", "nah.wav"]
 audio_sets_maybe = ["maybe.wav"]
 audio_sets_backchannel = ["hmmmm.wav"]
 audio_welcome = "intro.wav"
 
 
 delay_duration = 1  # seconds
-backchannel_chance = 0.99  # 50% chance of backchannel
+backchannel_chance = 1  # 50% chance of backchannel
 
 
 @app.route("/")
@@ -53,34 +74,40 @@ def handle_answer(ans, delay):
     if ans == 1:  # Yes
         print("Yes, delay : ", delay)
         if np.random.rand() < backchannel_chance:  # chance of backchannel
-            misty.upload_audio(
-                f"audios/{audio_sets_backchannel[np.random.randint(0, len(audio_sets_backchannel))]}"
+            upload_audio_to_misty(
+                misty,
+                f"audios/{audio_sets_backchannel[np.random.randint(0, len(audio_sets_backchannel))]}",
             )
-            misty.move_head_yes(0)
-            misty.upload_audio(
-                f"audios/{audio_sets_yes[np.random.randint(0, len(audio_sets_yes))]}"
+            move_head_yes(misty, 0)
+            upload_audio_to_misty(
+                misty,
+                f"audios/{audio_sets_yes[np.random.randint(0, len(audio_sets_yes))]}",
             )
 
     elif ans == 2:  # No
         print("No, delay : ", delay)
         if np.random.rand() < backchannel_chance:  # chance of backchannel
-            misty.upload_audio(
-                f"audios/{audio_sets_backchannel[np.random.randint(0, len(audio_sets_backchannel))]}"
+            upload_audio_to_misty(
+                misty,
+                f"audios/{audio_sets_backchannel[np.random.randint(0, len(audio_sets_backchannel))]}",
             )
-            misty.move_head_no(0)
-            misty.upload_audio(
-                f"audios/{audio_sets_no[np.random.randint(0, len(audio_sets_no))]}"
+            move_head_no(misty, 0)
+            upload_audio_to_misty(
+                misty,
+                f"audios/{audio_sets_no[np.random.randint(0, len(audio_sets_no))]}",
             )
 
     elif ans == 3:  # Maybe
         print("Maybe, delay : ", delay)
         if np.random.rand() < backchannel_chance:
-            misty.upload_audio(
-                f"audios/{audio_sets_backchannel[np.random.randint(0, len(audio_sets_backchannel))]}"
+            upload_audio_to_misty(
+                misty,
+                f"audios/{audio_sets_backchannel[np.random.randint(0, len(audio_sets_backchannel))]}",
             )
-            misty.move_head_backchanneling(0)
-            misty.upload_audio(
-                f"audios/{audio_sets_maybe[np.random.randint(0, len(audio_sets_maybe))]}"
+            move_head_backchanneling(misty, 0)
+            upload_audio_to_misty(
+                misty,
+                f"audios/{audio_sets_maybe[np.random.randint(0, len(audio_sets_maybe))]}",
             )
 
     return
@@ -177,15 +204,19 @@ def handle_gaze(gaze, mistygaze):
             2,
         )
 
+        now = datetime.datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+
         cv2.putText(
             processed_frame,
-            look_count_text,
-            (10, 90),
+            current_time,
+            (400, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
             (255, 255, 255),
             2,
         )
+
         # print(f"Engagement Percentage: {metrics['engagement_percentage']:.2f}%")
         # print(f"Average Look Duration: {metrics['average_look_duration']:.2f} frames")
         # print(f"Look Count: {metrics['look_count']}")
@@ -202,6 +233,8 @@ def main_process():
     global guiData
     # upload_audio_to_misty(misty, "audios/intro.wav")
     time.sleep(0.5)
+    cycle_start_time = time.time()
+    start_streaming(misty)  # havent tested this yet
     mistygaze = GazeTracker()
 
     # Start WebSocket server in a separate thread with exception handling
@@ -214,11 +247,12 @@ def main_process():
         prompt = guiData.get("prompt")
         gaze = guiData.get("gaze")
 
-        if gaze != 1:  # 1 = no gaze, 2 = gaze
-            print(gaze)
+
+        if gaze != 1:
             handle_gaze(gaze, mistygaze)
-        else:
+        else :
             cv2.destroyAllWindows()
+            
 
         if delay and ans != 0:
             time.sleep(delay_duration)
@@ -226,13 +260,12 @@ def main_process():
         if ans != 0:
             handle_answer(ans, delay)
         elif prompt != 0:
-            misty.handle_audio_prompt(prompt)
+            audio_handler.handle_prompt(misty, prompt)
 
         # reset answer
         guiData["ans"] = 0
         guiData["animal_num"] = 0
         guiData["prompt"] = 0
-        guiData["gaze"] = 1
 
         time.sleep(0.05)
 

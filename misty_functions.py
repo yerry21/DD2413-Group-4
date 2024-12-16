@@ -5,31 +5,22 @@ import cv2
 import time
 import base64
 
-
-
+misty = Robot("192.168.1.237")
+misty.start_video_streaming()
 # print(current_response.json())
 
 # Audio sets
 audio_sets_animals = ["animal1.wav", "animal2.wav", "animal3.wav", "animal4.wav", "animal5.wav"]
 audio_welcome = "intro.wav"
-audio_sets_next_round = ["Ask.wav", "AskNew.wav", "WhatQuestion.wav"]
+audio_sets_next_round = ["nextRound1.wav", "nextRound2.wav", "nextRound3.wav"]
 audio_sets_correct = ["YouGuessedIt.wav", "AbsolutelyRight.wav", "ThatsCorrect.wav"]
 audio_sets_ask_guess = ["MakeAGuess.wav", "WannaMakeAGuess.wav", "TimeToMakeAGuess.wav"]
 audio_finished = "ThanksForPlaying.wav"
 audio_questions_rem = ["5left.wav", "4left.wav", "3left.wav", "2left.wav", "1left.wav", "0left.wav"]
 audio_sorry = "sorry.wav"
 
-
-class MistyController:
-    def __init__(self, ip="192.168.1.237"):
-        """
-        Initialize the MistyController with a Misty robot instance.
-        
-        :param misty: Misty robot instance
-        """
-        self.misty = Robot(ip)
-        self.misty.start_video_streaming(5678, 90, 0, 0, 50, "false")
-        
+class AudioHandler:
+    def __init__(self):
         # Tracking counters for cycling audio sets
         self._counters = {
             'next_round': 0,
@@ -56,108 +47,18 @@ class MistyController:
             15: audio_sets_animals[3],  # Wrong answer for animal 4
             16: audio_sets_animals[4]   # Wrong answer for animal 5
         }
-
-
-    def move_head_no(self, center_pitch):
+    
+    def handle_prompt(self, misty, prompt):
         """
-        Animate Misty to shake its head (no).
+        Handle different prompts and play corresponding audio files.
         
-        :param center_pitch: Central pitch position
-        """
-        yaw_no = 20
-        yaw_delay = 0.5
-        yaw_duration = 0.1
-        
-        for _ in range(2):
-            self.misty.move_head(center_pitch, 0, -yaw_no, duration=yaw_duration)
-            time.sleep(yaw_delay)
-            self.misty.move_head(center_pitch, 0, yaw_no, duration=yaw_duration)
-            time.sleep(yaw_delay)
-        
-        # Move back to center
-        self.misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
-
-    def move_head_yes(self, center_pitch):
-        """
-        Animate Misty to nod its head (yes).
-        
-        :param center_pitch: Central pitch position
-        """
-        pitch_yes = 10
-        pitch_delay = 0.3
-        pitch_duration = 0.1
-
-        # Clip pitch to prevent looking too far up or down
-        move_down = np.clip((center_pitch + pitch_yes), a_min=-40, a_max=25).astype(float)
-        move_up = np.clip((move_down - 2 * pitch_yes), a_min=-40, a_max=25).astype(float)
-
-        for _ in range(2):
-            self.misty.move_head(move_up, 0, 0, duration=pitch_duration)
-            time.sleep(pitch_delay)
-            self.misty.move_head(move_down, 0, 0, duration=pitch_duration)
-            time.sleep(pitch_delay)
-
-        # Move back to center
-        self.misty.move_head(center_pitch, 0, 0, duration=pitch_duration)
-
-    def move_head_backchanneling(self, center_pitch, variant=1):
-        """
-        Animate Misty's head for backchanneling.
-        
-        :param center_pitch: Central pitch position
-        :param variant: Backchanneling variant (1 or 2)
-        """
-        yaw_side = 10 if variant == 1 else -10
-        yaw_delay = 0.5
-        yaw_duration = 0.1
-        
-        # Slight head tilt
-        self.misty.move_head(center_pitch, yaw_side, 0, duration=yaw_duration)
-        time.sleep(yaw_delay)
-        
-        # Slight nod
-        self.misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)
-        time.sleep(yaw_delay)
-        
-        # Head back to center
-        self.misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
-        time.sleep(yaw_delay)
-
-    def upload_audio(self, file_path, file_name="audio.wav"):
-        """
-        Upload an audio file to Misty.
-        
-        :param file_path: Path to the audio file
-        :param file_name: Name to save the audio file as
-        :return: Boolean indicating successful upload
-        """
-        # Read the audio file and convert to base64
-        with open(file_path, "rb") as audio_file:
-            audio_bytes = audio_file.read()
-            base64_audio = base64.b64encode(audio_bytes).decode('utf-8')
-        
-        # Upload to Misty
-        response = self.misty.save_audio(
-            fileName=file_name,
-            data=base64_audio,
-            immediatelyApply=True,
-            overwriteExisting=True
-        )
-        
-        print(f"Audio upload response: {response.status_code}")
-        return response.status_code == 200
-
-    def handle_audio_prompt(self, prompt):
-        """
-        Handle different audio prompts and play corresponding audio files.
-        
+        :param misty: Misty robot instance
         :param prompt: Numeric prompt identifying the current game state
-        :return: Boolean indicating successful audio handling
         """
         # Check if prompt exists in our mapping
         if prompt not in self._prompt_audio_map:
             print(f"Unknown prompt: {prompt}")
-            return False
+            return
         
         audio_source = self._prompt_audio_map[prompt]
         
@@ -179,51 +80,214 @@ class MistyController:
 
         if prompt == 11:
             # If no questions left, play the finished audio and ask to guess
-            self.upload_audio("audios/" + audio)
+            upload_audio_to_misty(misty, "audios/" + audio)
             time.sleep(2)
-            return self.handle_audio_prompt(4)
+            return self.handle_prompt(misty, 4)
 
         if 12 <= prompt <= 16:
-            # Play sorry audio for wrong animal answers
-            self.upload_audio("audios/" + audio_sorry)
+            upload_audio_to_misty(misty, "audios/" + audio_sorry)
+
             time.sleep(2)        
-
-        # Upload and play the appropriate audio
-        return self.upload_audio("audios/" + audio)
-
-    def center_head_on_centroid(self, x_offset, y_offset, pitch_step=10, yaw_step=10, x_tolerance=10, y_tolerance=10):
-        """
-        Adjust Misty's head to center on the eye centroid.
+        # Upload audio to Misty
+        return upload_audio_to_misty(misty, "audios/" + audio)
         
-        :param x_offset: Horizontal offset of the eye centroid
-        :param y_offset: Vertical offset of the eye centroid
-        :param pitch_step: Amount to adjust pitch per iteration
-        :param yaw_step: Amount to adjust yaw per iteration
-        :param x_tolerance: Acceptable horizontal offset range
-        :param y_tolerance: Acceptable vertical offset range
-        """
-        current_pitch = 0
-        current_yaw = 0
 
-        # Handle vertical adjustment (pitch)
-        if abs(y_offset) > y_tolerance:
-            current_pitch += pitch_step if y_offset > 0 else -pitch_step
-            current_pitch = max(-40, min(25, current_pitch))
-            self.misty.move_head(current_pitch, 0, current_yaw, duration=0.1)
-            print(f"Adjusting Pitch: {current_pitch} degrees")
 
-        # Handle horizontal adjustment (yaw)
-        if abs(x_offset) > x_tolerance:
-            current_yaw -= yaw_step if x_offset > 0 else -yaw_step
-            current_yaw = max(-90, min(90, current_yaw))
-            self.misty.move_head(current_pitch, 0, current_yaw, duration=0.1)
-            print(f"Adjusting Yaw: {current_yaw} degrees")
+def start_streaming(misty):
+    return misty.start_video_streaming(5678,90,0,0,50,"false")
+def start_face_detection(misty):
+    return misty.post_request("faces/detection/start")
+
+def get_face_data(misty):
+    return misty.get_request("faces/detection")
+
+def move_head_no(misty, center_pitch):
+    yaw_no = 20
+    yaw_delay = 0.5
+    yaw_duration = 0.1
+    # Animate Misty to shake it's head
+    misty.move_head(center_pitch, 0, -yaw_no, duration=yaw_duration)
+    delay(yaw_delay)
+    misty.move_head(center_pitch, 0, yaw_no, duration=yaw_duration)
+    delay(yaw_delay)
+    misty.move_head(center_pitch, 0, -yaw_no, duration=yaw_duration)
+    delay(yaw_delay)
+    misty.move_head(center_pitch, 0, yaw_no,duration= yaw_duration)
+    delay(yaw_delay)
+    # move back to center
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    return
+
+
+def move_head_yes(misty, center_pitch):
+    # Animate Misty to nod it's head
+    pitch_yes = 10
+    pitch_delay = 0.3
+    pitch_speed = 95
+    pitch_duration = 0.1
+
+    # cap the pitch to prevent Misty from looking too far up or down
+    move_down = np.clip((center_pitch + pitch_yes), a_min=-40, a_max=25).astype(float)
+    move_up = np.clip((move_down - 2 * pitch_yes), a_min=-40, a_max=25).astype(float)
+
+    curr_response = misty.move_head(move_up, 0, 0, duration=pitch_duration)
+    print(f"moving head up to: {move_up}")
+    delay(pitch_delay)
+
+    curr_response = misty.move_head(move_down, 0, 0, duration=pitch_duration)
+    print(f"moving head down to: {move_down}")
+    delay(pitch_delay)
+
+    curr_response = misty.move_head(move_up, 0, 0, duration=pitch_duration)
+    print(f"moving head up to: {move_up}")
+    delay(pitch_delay)
+
+    curr_response = misty.move_head(move_down, 0, 0, duration=pitch_duration)
+    print(f"moving head down to: {move_down}")
+    delay(pitch_delay)
+
+    # move back to center
+    curr_response = misty.move_head(center_pitch, 0, 0, duration=pitch_duration)
+    print("moving head back to center")
+    return
+
+def look_to_game(misty):
+    return misty.move_head(20, 0, 0, duration=0.1)
+
+def move_head_backchanneling(misty, center_pitch):
+    yaw_left = -10  # Slight tilt to the left
+    yaw_right = 10  # Slight tilt to the right
+    yaw_delay = 0.5
+    yaw_duration = 0.1
+    
+    # Slight head tilt to the left
+    misty.move_head(center_pitch, yaw_left, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Slight nod
+    misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)  # Slight upward nod
+    delay(yaw_delay)
+    
+    # Head back to center position after nod
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Slight tilt to the left and back to center for backchanneling effect
+    misty.move_head(center_pitch, yaw_left, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Nod again
+    misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Move back to center
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    return
+
+def move_head_backchanneling2(misty, center_pitch):
+    yaw_left = -10  # Slight tilt to the left
+    yaw_right = 10  # Slight tilt to the right
+    yaw_delay = 0.5
+    yaw_duration = 0.1
+    
+    # Slight head tilt to the left
+    misty.move_head(center_pitch, yaw_right, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    # Slight nod
+    misty.move_head(center_pitch + 5, 0, 0, duration=yaw_duration)  # Slight upward nod
+    delay(yaw_delay)
+    
+    # Head back to center position after nod
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    delay(yaw_delay)
+    
+    misty.move_head(center_pitch, 0, 0, duration=yaw_duration)
+    return
+
+
+def play_audio(self, fileName, volume) -> bool:
+    """Plays an audio file on Misty robot."""
+    volume = int(volume)
+    curr_response = self.play_audio(fileName=fileName, volume=volume)
+    print(curr_response)
+    return curr_response.status_code == 200
+
+def upload_audio_to_misty(misty, file_path):
+    # Read the audio file and convert to base64
+    with open(file_path, "rb") as audio_file:
+        audio_bytes = audio_file.read()
+        base64_audio = base64.b64encode(audio_bytes).decode('utf-8')
+    
+    # Upload to Misty
+    response = misty.save_audio(
+        fileName="intro.wav",
+        data=base64_audio,
+        immediatelyApply=True,
+        overwriteExisting=True
+    )
+    
+    print(f"Upload response: {response.status_code}")
+    return True
+
+def center_head_on_centroid(misty, x_offset, y_offset, pitch_step=10, yaw_step=10, x_tolerance=10,y_tolerance=10):
+    """
+    Adjust Misty's head yaw and pitch to center the eye centroid both vertically and horizontally.
+
+    Parameters:
+    - misty: Misty robot instance
+    - x_offset: Horizontal offset of the eye centroid from the image center (pixels)
+    - y_offset: Vertical offset of the eye centroid from the image center (pixels)
+    - pitch_step: Amount to adjust pitch per iteration (degrees)
+    - yaw_step: Amount to adjust yaw per iteration (degrees)
+    - tolerance: Acceptable range for offsets to be considered centered (pixels)
+    """
+
+    # Initialize current pitch and yaw
+    current_pitch = 0
+    current_yaw = 0
+
+    # Handle vertical adjustment (pitch)
+    if abs(y_offset) > y_tolerance:
+        if y_offset > 0:
+            # Eye centroid is below center - move head down
+            current_pitch += pitch_step
+        else:
+            # Eye centroid is above center - move head up
+            current_pitch -= pitch_step
+
+        # Clamp pitch to Misty's range (-40 to 25 degrees)
+        current_pitch = max(-40, min(25, current_pitch))
+
+        # Move Misty's head vertically
+        misty.move_head(current_pitch, 0, current_yaw, duration=0.1)
+        print(f"Adjusting Pitch: {current_pitch} degrees")
+    else:
+        print("Head centered vertically!")
+
+    # Handle horizontal adjustment (yaw)
+    if abs(x_offset) > x_tolerance:
+        if x_offset > 0:
+            # Eye centroid is to the left - move head left
+            current_yaw -= yaw_step
+        else:
+            # Eye centroid is to the right - move head right
+            current_yaw += yaw_step
+
+        # Clamp yaw to Misty's range (-90 to 90 degrees)
+        current_yaw = max(-90, min(90, current_yaw))
+
+        # Move Misty's head horizontally
+        misty.move_head(current_pitch, 0, current_yaw, duration=0.1)
+        print(f"Adjusting Yaw: {current_yaw} degrees")
+    else:
+        print("Head centered horizontally!")
 
 
 if __name__ == "__main__":
     eye_level_pitch = 0  # change this to the pitch of the eyes from face detection
-    # response = misty.get_known_faces()
-    # print(response.json())
+    response = misty.get_known_faces()
+    print(response.json())
 
     # misty.move_head(eye_level_pitch, 0, 0, 100)
     # This example sets Misty up to act as her own media server. Connect
@@ -264,4 +328,3 @@ if __name__ == "__main__":
     # move_head_yes(eye_level_pitch)
 
     # misty.start_video_streaming(5678,0,0,0,100,"false")
-
